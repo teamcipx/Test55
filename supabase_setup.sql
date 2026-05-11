@@ -18,8 +18,12 @@ create table public.settings (
   value jsonb
 );
 
+-- If you are missing the is_admin or is_approved columns in your profiles table, run these first:
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_admin boolean DEFAULT false;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_approved boolean DEFAULT false;
+
 -- How to set an Admin user manually (run this with your email):
--- UPDATE public.profiles SET is_admin = true WHERE email = 'your_email@example.com';
--- OR
--- UPDATE public.profiles SET is_admin = true WHERE username = 'your_username';
+-- UPDATE public.profiles SET is_admin = true, is_approved = true WHERE id = (SELECT id FROM auth.users WHERE email = 'your_email@example.com');
+-- OR using username:
+-- UPDATE public.profiles SET is_admin = true, is_approved = true WHERE username = 'your_username';
 

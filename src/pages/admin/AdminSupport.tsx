@@ -132,7 +132,7 @@ export default function AdminSupport() {
   return (
     <div className="h-[calc(100vh-140px)] flex bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden">
       {/* Sidebar: Conversations List */}
-      <div className="w-1/3 border-r border-zinc-800 flex flex-col">
+      <div className={`w-full md:w-1/3 border-r border-zinc-800 flex-col ${selectedUserId ? 'hidden md:flex' : 'flex'}`}>
         <div className="p-4 border-b border-zinc-800 bg-zinc-900/50">
           <h2 className="text-white font-medium flex items-center gap-2">
             <MessageSquare className="w-4 h-4 text-cyan-500" />
@@ -149,9 +149,9 @@ export default function AdminSupport() {
                 onClick={() => handleSelectUser(u.id)}
                 className={`w-full text-left p-4 border-b border-zinc-800/50 hover:bg-zinc-900 transition-colors flex items-center gap-3 ${selectedUserId === u.id ? 'bg-zinc-900 border-l-2 border-l-cyan-500' : ''}`}
               >
-                <img src={u.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80"} alt={u.display_name} className="w-10 h-10 rounded-full object-cover" />
+                <img src={u.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80"} alt={u.display_name || "User"} className="w-10 h-10 rounded-full object-cover" />
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-white truncate">{u.display_name}</div>
+                  <div className="text-sm font-medium text-white truncate">{u.display_name || "User"}</div>
                   <div className="text-xs text-zinc-500 truncate">{u.last_message || "Message..."}</div>
                 </div>
               </button>
@@ -161,11 +161,17 @@ export default function AdminSupport() {
       </div>
 
       {/* Main Chat Area */}
-      <div className="w-2/3 flex flex-col bg-[#050505]">
+      <div className={`w-full md:w-2/3 flex-col bg-[#050505] ${!selectedUserId ? 'hidden md:flex' : 'flex'}`}>
         {selectedUserId ? (
           <>
             {/* Header */}
-            <div className="p-4 border-b border-zinc-800 bg-zinc-900/50 flex items-center gap-3">
+            <div className="p-4 border-b border-zinc-800 bg-zinc-900/50 flex items-center gap-3 shrink-0">
+              <button 
+                onClick={() => setSelectedUserId(null)}
+                className="md:hidden flex items-center justify-center p-2 -ml-2 text-zinc-400 hover:text-white"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+              </button>
               <div className="w-8 h-8 rounded-full bg-cyan-900/30 text-cyan-400 flex items-center justify-center">
                 <User className="w-4 h-4" />
               </div>

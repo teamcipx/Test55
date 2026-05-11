@@ -44,6 +44,16 @@ export default function Signup() {
     resolver: zodResolver(signupSchema),
   });
 
+  React.useEffect(() => {
+    if (hasSupabaseConfig) {
+      supabase!.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          navigate("/dashboard");
+        }
+      });
+    }
+  }, [navigate]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
