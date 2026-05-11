@@ -62,11 +62,21 @@ export default function Community() {
   const fetchPosts = async () => {
     setLoading(true);
     // Fetch all posts (normal, thread, reply) and order by created_at desc
-    const { data } = await supabase
+    const { data: postsData } = await supabase
       .from('posts')
       .select('*, author:author_id(*)')
       .order('created_at', { ascending: false });
-    if (data) setPosts(data);
+      
+    if (postsData) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+         const { data: userLikes } = await supabase.from('likes').select('post_id').eq('user_id', user.id);
+         const likedPostIds = new Set(userLikes?.map(l => l.post_id) || []);
+         setPosts(postsData.map(p => ({...p, has_liked: likedPostIds.has(p.id)})));
+      } else {
+         setPosts(postsData);
+      }
+    }
     setLoading(false);
   };
 
@@ -191,10 +201,71 @@ export default function Community() {
     );
   };
 
-  const handleLike = async (postId: string) => {
+  const toggleLike = async (postId: string) => {
     if (!currentUser) return alert('Please login to like');
-    // Implement like handling here
-    // Optimistic UI updates could be done
+    try {
+      const { data: existingLike } = await supabase
+        .from('likes')
+        .select('id')
+        .eq('post_id', postId)
+        .eq('user_id', currentUser.id)
+        .maybeSingle();
+
+      if (existingLike) {
+        // Unlike
+        await supabase.from('likes').delete().eq('id', existingLike.id);
+        
+        // Optimistic UI update
+        setPosts(posts.map(p => {
+          if (p.id === postId) {
+            return { ...p, likes_count: Math.max(0, p.likes_count - 1), has_liked: false };
+          }
+          return p;
+        }));
+      } else {
+        // Like
+        await supabase.from('likes').insert({ post_id: postId, user_id: currentUser.id });
+        
+        // Add notification for the like
+        const post = posts.find(p => p.id === postId);
+        if (post && post.user_id !== currentUser.id) {
+          await supabase.from('notifications').insert({
+            user_id: post.user_id,
+            actor_id: currentUser.id,
+            type: 'like',
+            reference_id: postId,
+            content: 'liked your post'
+          });
+        }
+        
+        // Optimistic UI update
+        setPosts(posts.map(p => {
+          if (p.id === postId) {
+            return { ...p, likes_count: p.likes_count + 1, has_liked: true };
+          }
+          return p;
+        }));
+      }
+    } catch (err: any) {
+      console.error(err);
+    }
+  };
+
+  const handleShare = async (postId: string) => {
+    // In a real app we'd trigger a share dialog. Here we just increment shares_count and copy to clipboard.
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/thread/${postId}`);
+      alert('Link copied to clipboard!');
+      
+      const post = posts.find(p => p.id === postId);
+      if (post) {
+        const newCount = (post.shares_count || 0) + 1;
+        await supabase.from('posts').update({ shares_count: newCount }).eq('id', postId);
+        setPosts(posts.map(p => p.id === postId ? { ...p, shares_count: newCount } : p));
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -350,14 +421,14 @@ export default function Community() {
               )}
 
               <div className="flex items-center gap-6 mt-4 pt-4 border-t border-zinc-800/50">
-                <button onClick={() => handleLike(post.id)} className="flex items-center gap-2 text-zinc-400 hover:text-red-400 transition-colors text-sm font-medium group">
-                  <div className="p-1.5 rounded-full group-hover:bg-red-500/10"><Heart className="w-4 h-4" /></div> {post.likes_count}
+                <button onClick={() => toggleLike(post.id)} className={`flex items-center gap-2 transition-colors text-sm font-medium group ${post.has_liked ? 'text-red-500' : 'text-zinc-400 hover:text-red-400'}`}>
+                  <div className="p-1.5 rounded-full group-hover:bg-red-500/10"><Heart className={`w-4 h-4 ${post.has_liked ? 'fill-current' : ''}`} /></div> {post.likes_count}
                 </button>
-                <button className="flex items-center gap-2 text-zinc-400 hover:text-cyan-400 transition-colors text-sm font-medium group">
+                <Link to={`/thread/${post.type === 'thread' ? post.id : post.thread_id}`} className="flex items-center gap-2 text-zinc-400 hover:text-cyan-400 transition-colors text-sm font-medium group">
                   <div className="p-1.5 rounded-full group-hover:bg-cyan-500/10"><MessageSquare className="w-4 h-4" /></div> {post.replies_count}
-                </button>
-                <button className="flex items-center gap-2 text-zinc-400 hover:text-emerald-400 transition-colors text-sm font-medium group">
-                  <div className="p-1.5 rounded-full group-hover:bg-emerald-500/10"><Share2 className="w-4 h-4" /></div> {post.shares_count}
+                </Link>
+                <button onClick={() => handleShare(post.id)} className="flex items-center gap-2 text-zinc-400 hover:text-emerald-400 transition-colors text-sm font-medium group">
+                  <div className="p-1.5 rounded-full group-hover:bg-emerald-500/10"><Share2 className="w-4 h-4" /></div> {post.shares_count || 0}
                 </button>
               </div>
             </div>

@@ -84,8 +84,6 @@ export default function Thread() {
       .single();
       
     if (threadData) {
-      setThread(threadData);
-      
       // Fetch replies
       const { data: repliesData } = await supabase
         .from('posts')
@@ -93,7 +91,18 @@ export default function Thread() {
         .eq('thread_id', id)
         .order('created_at', { ascending: true });
         
-      if (repliesData) setReplies(repliesData);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+         const { data: userLikes } = await supabase.from('likes').select('post_id').eq('user_id', user.id);
+         const likedPostIds = new Set(userLikes?.map(l => l.post_id) || []);
+         setThread({...threadData, has_liked: likedPostIds.has(threadData.id)});
+         if (repliesData) {
+           setReplies(repliesData.map(r => ({...r, has_liked: likedPostIds.has(r.id)})));
+         }
+      } else {
+         setThread(threadData);
+         if (repliesData) setReplies(repliesData);
+      }
     }
     
     setLoading(false);
@@ -135,6 +144,72 @@ export default function Thread() {
       alert('Error saving reply: ' + err.message);
     } finally {
       setReplying(false);
+    }
+  };
+
+  const toggleLike = async (postId: string, isReply: boolean = false) => {
+    if (!currentUser) return alert('Please login to like');
+    try {
+      const { data: existingLike } = await supabase
+        .from('likes')
+        .select('id')
+        .eq('post_id', postId)
+        .eq('user_id', currentUser.id)
+        .maybeSingle();
+
+      if (existingLike) {
+        // Unlike
+        await supabase.from('likes').delete().eq('id', existingLike.id);
+        
+        // Optimistic UI update
+        if (isReply) {
+          setReplies(replies.map(r => r.id === postId ? { ...r, likes_count: Math.max(0, r.likes_count - 1), has_liked: false } : r));
+        } else if (thread) {
+          setThread({ ...thread, likes_count: Math.max(0, thread.likes_count - 1), has_liked: false });
+        }
+      } else {
+        // Like
+        await supabase.from('likes').insert({ post_id: postId, user_id: currentUser.id });
+        
+        // Add notification for the like
+        const post = isReply ? replies.find(r => r.id === postId) : thread;
+        if (post && post.user_id !== currentUser.id) {
+          await supabase.from('notifications').insert({
+            user_id: post.user_id,
+            actor_id: currentUser.id,
+            type: 'like',
+            reference_id: postId,
+            content: 'liked your post'
+          });
+        }
+        
+        // Optimistic UI update
+        if (isReply) {
+          setReplies(replies.map(r => r.id === postId ? { ...r, likes_count: r.likes_count + 1, has_liked: true } : r));
+        } else if (thread) {
+          setThread({ ...thread, likes_count: thread.likes_count + 1, has_liked: true });
+        }
+      }
+    } catch (err: any) {
+      console.error(err);
+    }
+  };
+
+  const handleShare = async (postId: string, isReply: boolean = false) => {
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/thread/${id}#reply-${postId}`);
+      alert('Link copied to clipboard!');
+      
+      const newCount = ((isReply ? replies.find(r => r.id === postId)?.shares_count : thread?.shares_count) || 0) + 1;
+      await supabase.from('posts').update({ shares_count: newCount }).eq('id', postId);
+      
+      if (isReply) {
+        setReplies(replies.map(r => r.id === postId ? { ...r, shares_count: newCount } : r));
+      } else if (thread) {
+        setThread({ ...thread, shares_count: newCount });
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -192,14 +267,14 @@ export default function Thread() {
         )}
 
         <div className="flex items-center gap-8 mt-8 pt-6 border-t border-zinc-800">
-          <button className="flex items-center gap-2 text-zinc-400 hover:text-red-400 transition-colors font-medium group">
-            <div className="p-2 rounded-full group-hover:bg-red-500/10"><Heart className="w-5 h-5" /></div> {thread.likes_count}
+          <button onClick={() => toggleLike(thread.id, false)} className={`flex items-center gap-2 transition-colors font-medium group ${thread.has_liked ? 'text-red-500' : 'text-zinc-400 hover:text-red-400'}`}>
+            <div className="p-2 rounded-full group-hover:bg-red-500/10"><Heart className={`w-5 h-5 ${thread.has_liked ? 'fill-current' : ''}`} /></div> {thread.likes_count}
           </button>
-          <button className="flex items-center gap-2 text-zinc-400 hover:text-cyan-400 transition-colors font-medium group">
-            <div className="p-2 rounded-full group-hover:bg-cyan-500/10"><MessageSquare className="w-5 h-5" /></div> {thread.replies_count}
-          </button>
-          <button className="flex items-center gap-2 text-zinc-400 hover:text-emerald-400 transition-colors font-medium group">
-            <div className="p-2 rounded-full group-hover:bg-emerald-500/10"><Share2 className="w-5 h-5" /></div> {thread.shares_count}
+          <div className="flex items-center gap-2 text-zinc-400 font-medium group cursor-default">
+            <div className="p-2 rounded-full"><MessageSquare className="w-5 h-5" /></div> {thread.replies_count}
+          </div>
+          <button onClick={() => handleShare(thread.id, false)} className="flex items-center gap-2 text-zinc-400 hover:text-emerald-400 transition-colors font-medium group">
+            <div className="p-2 rounded-full group-hover:bg-emerald-500/10"><Share2 className="w-5 h-5" /></div> {thread.shares_count || 0}
           </button>
           <div className="flex-1" />
           {isAdmin && (
@@ -248,8 +323,11 @@ export default function Thread() {
                 </div>
               )}
               <div className="flex items-center gap-4 mt-3">
-                <button className="flex items-center gap-1.5 text-zinc-500 hover:text-red-400 transition-colors text-xs font-medium content-center">
-                  <Heart className="w-3.5 h-3.5" /> {reply.likes_count > 0 && reply.likes_count}
+                <button onClick={() => toggleLike(reply.id, true)} className={`flex items-center gap-1.5 transition-colors text-xs font-medium content-center ${reply.has_liked ? 'text-red-500' : 'text-zinc-500 hover:text-red-400'}`}>
+                  <Heart className={`w-3.5 h-3.5 ${reply.has_liked ? 'fill-current' : ''}`} /> {reply.likes_count > 0 && reply.likes_count}
+                </button>
+                <button onClick={() => handleShare(reply.id, true)} className="flex items-center gap-1.5 text-zinc-500 hover:text-emerald-400 transition-colors text-xs font-medium content-center">
+                  <Share2 className="w-3.5 h-3.5" />
                 </button>
                 {isAdmin && (
                   <button 
