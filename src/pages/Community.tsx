@@ -1,0 +1,334 @@
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router";
+import { supabase, hasSupabaseConfig } from "../lib/supabase";
+import { formatDistanceToNow } from "date-fns";
+import { User, MessageSquare, Heart, Share2, Image as ImageIcon, Send, X, FileText } from "lucide-react";
+import { uploadToImgBB } from "../lib/imgbb";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
+
+// Remove invalid links from text
+function formatPostContent(html: string) {
+  if (!html) return '';
+  // Basic parsing to strip links unless they have hijab.site
+  const temp = document.createElement('div');
+  temp.innerHTML = html;
+  const links = temp.querySelectorAll('a');
+  links.forEach(a => {
+    try {
+      const url = new URL(a.href);
+      if (!url.hostname.endsWith('hijab.site')) {
+        // Strip the link, keep the text
+        const textNode = document.createTextNode(a.textContent || '');
+        a.parentNode?.replaceChild(textNode, a);
+      }
+    } catch {
+      // Invalid URL, just remove link
+      const textNode = document.createTextNode(a.textContent || '');
+      a.parentNode?.replaceChild(textNode, a);
+    }
+  });
+  return temp.innerHTML;
+}
+
+export default function Community() {
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  
+  // Create Post / Thread states
+  const [postMode, setPostMode] = useState<'normal'|'thread'>('normal');
+  const [content, setContent] = useState('');
+  const [threadTitle, setThreadTitle] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [publishing, setPublishing] = useState(false);
+  const [expandedPosts, setExpandedPosts] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (hasSupabaseConfig) {
+      supabase.auth.getUser().then(({ data }) => setCurrentUser(data.user));
+      fetchPosts();
+    }
+  }, []);
+
+  const fetchPosts = async () => {
+    setLoading(true);
+    // Fetch all posts (normal, thread, reply) and order by created_at desc
+    const { data } = await supabase
+      .from('posts')
+      .select('*, author:author_id(*)')
+      .order('created_at', { ascending: false });
+    if (data) setPosts(data);
+    setLoading(false);
+  };
+
+  const quillModules = {
+    toolbar: [
+      [{ 'header': [1, 2, false] }],
+      ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+      [{'list': 'ordered'}, {'list': 'bullet'}, {'indent': '-1'}, {'indent': '+1'}],
+      ['link', 'image'],
+      ['clean']
+    ],
+  };
+
+  const handlePostSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!currentUser) return alert('Please login to post');
+    if (!content.trim() && !imageFile) return;
+
+    setPublishing(true);
+    try {
+      let imageUrl = null;
+      if (imageFile) {
+        imageUrl = await uploadToImgBB(imageFile);
+      }
+
+      // Format content to strip invalid links
+      const cleanContent = formatPostContent(content);
+
+      if (postMode === 'normal') {
+        const { error } = await supabase.from('posts').insert({
+          user_id: currentUser.id,
+          author_id: currentUser.id,
+          type: 'post',
+          content: cleanContent,
+          image_url: imageUrl,
+        });
+        if (error) throw error;
+      } else {
+        if (!threadTitle.trim()) {
+          alert('Thread title is required');
+          setPublishing(false);
+          return;
+        }
+        const { error } = await supabase.from('posts').insert({
+          user_id: currentUser.id,
+          author_id: currentUser.id,
+          type: 'thread',
+          title: threadTitle,
+          content: cleanContent,
+        });
+        if (error) throw error;
+      }
+
+      setContent('');
+      setThreadTitle('');
+      setImageFile(null);
+      setImagePreview(null);
+      fetchPosts();
+    } catch (err: any) {
+      console.error(err);
+      alert('Error creating post: ' + err.message);
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  const toggleExpand = (postId: string) => {
+    setExpandedPosts(prev => ({ ...prev, [postId]: !prev[postId] }));
+  };
+
+  const renderContent = (post: any) => {
+    const isExpanded = expandedPosts[post.id];
+    const textHTML = post.content || '';
+    
+    // Simplistic strip tags for normal mode length check 
+    // real implementation might vary if thread HTML gets huge, but they are viewed in thread anyway.
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = textHTML;
+    const textLength = tempDiv.textContent?.length || 0;
+
+    const shouldTruncate = textLength > 300 && !isExpanded;
+
+    return (
+      <div className="mt-3 text-sm text-zinc-300 leading-relaxed space-y-4">
+        {post.type === 'thread' && (
+          <h3 className="text-xl font-serif text-white">{post.title}</h3>
+        )}
+        <div 
+          className={`prose prose-invert prose-p:my-2 prose-a:text-cyan-400 max-w-none ${shouldTruncate ? 'line-clamp-6' : ''}`}
+          dangerouslySetInnerHTML={{ __html: textHTML }} 
+        />
+        {shouldTruncate && (
+          <button 
+            onClick={() => toggleExpand(post.id)}
+            className="text-cyan-400 font-medium text-xs hover:underline mt-2 uppercase tracking-wide"
+          >
+            Read More
+          </button>
+        )}
+        {isExpanded && textLength > 300 && (
+           <button 
+           onClick={() => toggleExpand(post.id)}
+           className="text-zinc-500 font-medium text-xs hover:underline mt-2 uppercase tracking-wide"
+         >
+           Show Less
+         </button>
+        )}
+      </div>
+    );
+  };
+
+  const handleLike = async (postId: string) => {
+    if (!currentUser) return alert('Please login to like');
+    // Implement like handling here
+    // Optimistic UI updates could be done
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto w-full py-6 md:py-10 px-4 min-h-screen">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-serif text-white mb-2">Community Discussions</h1>
+          <p className="text-zinc-400 text-sm">Join the conversation securely.</p>
+        </div>
+      </div>
+
+      {/* Editor Box */}
+      {currentUser && (
+        <div className="bg-zinc-900/40 border border-zinc-800 rounded-xl p-4 mb-8">
+          <div className="flex gap-4 border-b border-zinc-800 pb-4 mb-4">
+            <button 
+              onClick={() => setPostMode('normal')}
+              className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-full transition-colors ${postMode === 'normal' ? 'bg-cyan-900/30 text-cyan-400' : 'text-zinc-400 hover:text-white'}`}
+            >
+              <MessageSquare className="w-4 h-4" /> Normal Post
+            </button>
+            <button 
+              onClick={() => setPostMode('thread')}
+              className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-full transition-colors ${postMode === 'thread' ? 'bg-cyan-900/30 text-cyan-400' : 'text-zinc-400 hover:text-white'}`}
+            >
+              <FileText className="w-4 h-4" /> New Thread
+            </button>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <div className="flex gap-3">
+              <div className="w-10 h-10 rounded-full bg-zinc-800 shrink-0 overflow-hidden">
+                {currentUser?.user_metadata?.avatar_url ? (
+                   <img src={currentUser.user_metadata.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                   <div className="w-full h-full flex items-center justify-center text-zinc-500"><User className="w-5 h-5"/></div>
+                )}
+              </div>
+              <div className="flex-1 space-y-3">
+                {postMode === 'thread' ? (
+                  <>
+                    <input 
+                      type="text" 
+                      placeholder="Thread Title"
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-white focus:border-cyan-500 outline-none"
+                      value={threadTitle}
+                      onChange={e => setThreadTitle(e.target.value)}
+                    />
+                    <div className="bg-white rounded text-black p-1">
+                      <ReactQuill theme="snow" value={content} onChange={setContent} modules={quillModules} className="bg-white" />
+                    </div>
+                  </>
+                ) : (
+                  <textarea 
+                    placeholder="What's on your mind? (Only hijab.site links allowed)"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-white focus:border-cyan-500 outline-none min-h-[100px] resize-y"
+                    value={content}
+                    onChange={e => setContent(e.target.value)}
+                  />
+                )}
+              </div>
+            </div>
+
+            {imagePreview && postMode === 'normal' && (
+              <div className="relative w-max ml-13">
+                <img src={imagePreview} className="max-w-[200px] rounded-lg border border-zinc-700" alt="Preview"/>
+                <button onClick={() => {setImageFile(null); setImagePreview(null)}} className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full"><X className="w-4 h-4"/></button>
+              </div>
+            )}
+
+            <div className="flex justify-between items-center pt-2 ml-13 border-t border-zinc-800 mt-2">
+              <div className="flex gap-2">
+                {postMode === 'normal' && (
+                  <label className="cursor-pointer text-cyan-500 hover:text-cyan-400 p-2 rounded-full hover:bg-cyan-500/10 transition-colors">
+                    <ImageIcon className="w-5 h-5" />
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                      if(e.target.files && e.target.files[0]) {
+                        setImageFile(e.target.files[0]);
+                        setImagePreview(URL.createObjectURL(e.target.files[0]));
+                      }
+                    }} />
+                  </label>
+                )}
+              </div>
+              <button 
+                onClick={handlePostSubmit}
+                disabled={publishing}
+                className="bg-cyan-600 hover:bg-cyan-500 text-white px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-widest disabled:opacity-50 flex items-center gap-2"
+              >
+                {publishing ? 'Posting...' : (postMode === 'thread' ? 'Publish Thread' : 'Post')} <Send className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Feed */}
+      <div className="space-y-6">
+        {loading ? (
+          <div className="flex justify-center p-8"><div className="w-8 h-8 rounded-full border-2 border-cyan-500/20 border-t-cyan-500 animate-spin" /></div>
+        ) : posts.length === 0 ? (
+          <div className="text-center p-12 text-zinc-500 border border-zinc-800 rounded-xl bg-zinc-900/20">
+            <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p>No posts yet. Be the first to start a discussion!</p>
+          </div>
+        ) : (
+          posts.map(post => (
+            <div key={post.id} className="bg-zinc-900/30 border border-zinc-800 rounded-xl p-5 backdrop-blur-sm">
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex items-center gap-3">
+                  <img 
+                    src={post.author?.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80"} 
+                    alt="avatar" 
+                    className="w-10 h-10 rounded-full object-cover border border-zinc-700" 
+                  />
+                  <div>
+                    <h4 className="text-white font-medium text-sm flex items-center gap-2">
+                      {post.author?.display_name || "User"}
+                      {post.type === 'thread' && <span className="px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-bold bg-cyan-900/30 text-cyan-400 border border-cyan-800/50">Thread</span>}
+                      {post.type === 'reply' && <span className="px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-bold bg-zinc-800 text-zinc-400 border border-zinc-700">Reply</span>}
+                    </h4>
+                    <p className="text-xs text-zinc-500">{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</p>
+                  </div>
+                </div>
+                {(post.type === 'thread' || post.type === 'reply') && (
+                  <Link to={`/thread/${post.type === 'thread' ? post.id : post.thread_id}`} className="text-xs text-cyan-500 hover:text-cyan-400 p-2 rounded bg-cyan-500/10 uppercase tracking-widest font-bold">
+                    View in Thread
+                  </Link>
+                )}
+              </div>
+
+              {renderContent(post)}
+              
+              {post.image_url && (
+                <div className="mt-4 rounded-xl overflow-hidden border border-zinc-800">
+                  <img src={post.image_url} alt="Post media" className="w-full max-h-[500px] object-cover" />
+                </div>
+              )}
+
+              <div className="flex items-center gap-6 mt-4 pt-4 border-t border-zinc-800/50">
+                <button onClick={() => handleLike(post.id)} className="flex items-center gap-2 text-zinc-400 hover:text-red-400 transition-colors text-sm font-medium group">
+                  <div className="p-1.5 rounded-full group-hover:bg-red-500/10"><Heart className="w-4 h-4" /></div> {post.likes_count}
+                </button>
+                <button className="flex items-center gap-2 text-zinc-400 hover:text-cyan-400 transition-colors text-sm font-medium group">
+                  <div className="p-1.5 rounded-full group-hover:bg-cyan-500/10"><MessageSquare className="w-4 h-4" /></div> {post.replies_count}
+                </button>
+                <button className="flex items-center gap-2 text-zinc-400 hover:text-emerald-400 transition-colors text-sm font-medium group">
+                  <div className="p-1.5 rounded-full group-hover:bg-emerald-500/10"><Share2 className="w-4 h-4" /></div> {post.shares_count}
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
