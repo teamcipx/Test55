@@ -1,6 +1,28 @@
--- Instruction to run in Supabase SQL Editor
--- Create Messages table for Support 
-create table public.messages (
+-- Complete Supabase Schema Setup
+
+-- 1. Profiles Table
+create table if not exists public.profiles (
+  id uuid references auth.users not null primary key,
+  real_name text,
+  display_name text,
+  username text unique,
+  avatar_url text,
+  phone text,
+  telegram_or_fb text,
+  country text,
+  interest text,
+  age int,
+  is_admin boolean default false,
+  is_approved boolean default false,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Ensure admin and approved columns exist (just in case the table already existed)
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_admin boolean DEFAULT false;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_approved boolean DEFAULT false;
+
+-- 2. Messages Table for Support 
+create table if not exists public.messages (
   id uuid default gen_random_uuid() primary key,
   user_id uuid references auth.users not null,
   is_admin boolean default false,
@@ -12,14 +34,14 @@ create table public.messages (
 -- Turn on Realtime for admin & users
 alter table public.messages replica identity full;
 
--- Create Settings table for storing multiple ImgBB keys
-create table public.settings (
+-- 3. Settings Table for storing multiple ImgBB keys
+create table if not exists public.settings (
   id text primary key,
   value jsonb
 );
 
--- Posts / Threads Table
-create table public.posts (
+-- 4. Posts / Threads Table
+create table if not exists public.posts (
   id uuid default gen_random_uuid() primary key,
   user_id uuid references auth.users not null,
   author_id uuid references public.profiles(id),
@@ -34,8 +56,8 @@ create table public.posts (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- Likes Table
-create table public.likes (
+-- 5. Likes Table
+create table if not exists public.likes (
   id uuid default gen_random_uuid() primary key,
   post_id uuid references public.posts(id) not null,
   user_id uuid references auth.users not null,
@@ -43,7 +65,7 @@ create table public.likes (
   unique(post_id, user_id)
 );
 
--- RPC for incrementing replies count
+-- 6. RPC Functions
 create or replace function increment_replies_count(row_id uuid)
 returns void as $$
 begin
@@ -53,11 +75,9 @@ begin
 end;
 $$ language plpgsql;
 
--- If you are missing the is_admin or is_approved columns in your profiles table, run these first:
-ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_admin boolean DEFAULT false;
-ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_approved boolean DEFAULT false;
-
--- How to set an Admin user manually (run this with your email):
+-- ============================================================================
+-- How to set an Admin user manually (run this in Supabase SQL Editor):
 -- UPDATE public.profiles SET is_admin = true, is_approved = true WHERE id = (SELECT id FROM auth.users WHERE email = 'your_email@example.com');
 -- OR using username:
 -- UPDATE public.profiles SET is_admin = true, is_approved = true WHERE username = 'your_username';
+-- ============================================================================
