@@ -11,6 +11,8 @@ import Profile from './pages/Profile';
 import Community from './pages/Community';
 import Thread from './pages/Thread';
 import UserProfile from './pages/UserProfile';
+import About from './pages/About';
+import Contact from './pages/Contact';
 
 // Admin Pages
 import AdminLayout from './pages/admin/AdminLayout';
@@ -34,6 +36,8 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/community" element={<Community />} />
           <Route path="/thread/:id" element={<Thread />} />
           <Route path="/user/:id" element={<UserProfile />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
         </Route>
 
         <Route path="/admin" element={<AdminLayout />}>

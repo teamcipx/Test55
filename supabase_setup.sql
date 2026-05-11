@@ -75,6 +75,33 @@ begin
 end;
 $$ language plpgsql;
 
+create or replace function delete_post_with_relations(post_id_to_delete uuid)
+returns void as $$
+begin
+  -- Delete likes of the post itself
+  delete from public.likes where post_id = post_id_to_delete;
+  
+  -- Delete likes of replies if it's a thread
+  delete from public.likes where post_id in (select id from public.posts where thread_id = post_id_to_delete);
+  
+  -- Delete replies
+  delete from public.posts where thread_id = post_id_to_delete;
+  
+  -- Delete the post itself
+  delete from public.posts where id = post_id_to_delete;
+end;
+$$ language plpgsql;
+
+-- 7. Contact Messages Table
+create table if not exists public.contact_messages (
+  id uuid default gen_random_uuid() primary key,
+  name text,
+  email text,
+  subject text,
+  message text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
 -- ============================================================================
 -- How to set an Admin user manually (run this in Supabase SQL Editor):
 -- UPDATE public.profiles SET is_admin = true, is_approved = true WHERE id = (SELECT id FROM auth.users WHERE email = 'your_email@example.com');

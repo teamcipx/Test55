@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router";
+import { useParams, Link, useNavigate } from "react-router";
 import { supabase, hasSupabaseConfig } from "../lib/supabase";
 import { formatDistanceToNow } from "date-fns";
-import { User, MessageSquare, Heart, Share2, Image as ImageIcon, Send, X, ArrowLeft } from "lucide-react";
+import { User, MessageSquare, Heart, Share2, Image as ImageIcon, Send, X, ArrowLeft, Trash2 } from "lucide-react";
 import { uploadToImgBB } from "../lib/imgbb";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
@@ -30,10 +30,12 @@ function formatPostContent(html: string) {
 
 export default function Thread() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [thread, setThread] = useState<any>(null);
   const [replies, setReplies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Reply states
   const [replyContent, setReplyContent] = useState('');
@@ -43,10 +45,33 @@ export default function Thread() {
 
   useEffect(() => {
     if (hasSupabaseConfig && id) {
-      supabase.auth.getUser().then(({ data }) => setCurrentUser(data.user));
+      supabase.auth.getUser().then(async ({ data }) => {
+        setCurrentUser(data.user);
+        if (data.user) {
+          const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', data.user.id).single();
+          setIsAdmin(profile?.is_admin || false);
+        }
+      });
       fetchThread();
     }
   }, [id]);
+
+  const handleDeletePost = async (postId: string, isMainThread: boolean) => {
+    if (!isAdmin) return;
+    if (!confirm('Are you sure you want to delete this?')) return;
+    try {
+      const { error } = await supabase.rpc('delete_post_with_relations', { post_id_to_delete: postId });
+      if (error) throw error;
+      if (isMainThread) {
+        navigate('/community');
+      } else {
+        fetchThread();
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert('Error deleting: ' + err.message);
+    }
+  };
 
   const fetchThread = async () => {
     setLoading(true);
@@ -176,6 +201,16 @@ export default function Thread() {
           <button className="flex items-center gap-2 text-zinc-400 hover:text-emerald-400 transition-colors font-medium group">
             <div className="p-2 rounded-full group-hover:bg-emerald-500/10"><Share2 className="w-5 h-5" /></div> {thread.shares_count}
           </button>
+          <div className="flex-1" />
+          {isAdmin && (
+            <button 
+              onClick={() => handleDeletePost(thread.id, true)}
+              className="flex items-center gap-2 text-red-500 hover:text-red-400 transition-colors font-medium text-sm"
+              title="Delete thread"
+            >
+              <Trash2 className="w-5 h-5" /> Delete
+            </button>
+          )}
         </div>
       </div>
 
@@ -216,6 +251,15 @@ export default function Thread() {
                 <button className="flex items-center gap-1.5 text-zinc-500 hover:text-red-400 transition-colors text-xs font-medium content-center">
                   <Heart className="w-3.5 h-3.5" /> {reply.likes_count > 0 && reply.likes_count}
                 </button>
+                {isAdmin && (
+                  <button 
+                    onClick={() => handleDeletePost(reply.id, false)}
+                    className="flex items-center gap-1.5 text-zinc-500 hover:text-red-400 transition-colors text-xs font-medium content-center"
+                    title="Delete reply"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             </div>
           </div>

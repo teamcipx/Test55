@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router";
 import { supabase, hasSupabaseConfig } from "../lib/supabase";
 import { formatDistanceToNow } from "date-fns";
-import { User, MessageSquare, Heart, Share2, Image as ImageIcon, Send, X, FileText } from "lucide-react";
+import { User, MessageSquare, Heart, Share2, Image as ImageIcon, Send, X, FileText, Trash2 } from "lucide-react";
 import { uploadToImgBB } from "../lib/imgbb";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
@@ -35,6 +35,7 @@ export default function Community() {
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   
   // Create Post / Thread states
   const [postMode, setPostMode] = useState<'normal'|'thread'>('normal');
@@ -47,7 +48,13 @@ export default function Community() {
 
   useEffect(() => {
     if (hasSupabaseConfig) {
-      supabase.auth.getUser().then(({ data }) => setCurrentUser(data.user));
+      supabase.auth.getUser().then(async ({ data }) => {
+        setCurrentUser(data.user);
+        if (data.user) {
+          const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', data.user.id).single();
+          setIsAdmin(profile?.is_admin || false);
+        }
+      });
       fetchPosts();
     }
   }, []);
@@ -61,6 +68,19 @@ export default function Community() {
       .order('created_at', { ascending: false });
     if (data) setPosts(data);
     setLoading(false);
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    if (!isAdmin) return;
+    if (!confirm('Are you sure you want to delete this post? This will delete all replies and likes as well.')) return;
+    try {
+      const { error } = await supabase.rpc('delete_post_with_relations', { post_id_to_delete: postId });
+      if (error) throw error;
+      fetchPosts();
+    } catch (err: any) {
+      console.error(err);
+      alert('Error deleting post: ' + err.message);
+    }
   };
 
   const quillModules = {
@@ -303,11 +323,22 @@ export default function Community() {
                     <p className="text-xs text-zinc-500">{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</p>
                   </div>
                 </div>
-                {(post.type === 'thread' || post.type === 'reply') && (
-                  <Link to={`/thread/${post.type === 'thread' ? post.id : post.thread_id}`} className="text-xs text-cyan-500 hover:text-cyan-400 p-2 rounded bg-cyan-500/10 uppercase tracking-widest font-bold">
-                    View in Thread
-                  </Link>
-                )}
+                <div className="flex items-center gap-2">
+                  {(post.type === 'thread' || post.type === 'reply') && (
+                    <Link to={`/thread/${post.type === 'thread' ? post.id : post.thread_id}`} className="text-xs text-cyan-500 hover:text-cyan-400 p-2 rounded bg-cyan-500/10 uppercase tracking-widest font-bold">
+                      View in Thread
+                    </Link>
+                  )}
+                  {isAdmin && (
+                    <button 
+                      onClick={() => handleDeletePost(post.id)}
+                      className="text-zinc-500 hover:text-red-400 p-2 rounded hover:bg-red-500/10 transition-colors"
+                      title="Delete post"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               </div>
 
               {renderContent(post)}

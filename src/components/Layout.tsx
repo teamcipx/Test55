@@ -5,6 +5,8 @@ import { cn } from "../lib/utils";
 import SupportWidget from "./SupportWidget";
 import { supabase, hasSupabaseConfig } from "../lib/supabase";
 
+import GlobalNotice from "./GlobalNotice";
+
 export default function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userSession, setUserSession] = useState<any>(null);
@@ -173,12 +175,7 @@ export default function Layout() {
       </header>
 
       {/* Global Notice */}
-      <div className="relative z-10 bg-cyan-950/30 border-b border-cyan-900/50 py-2 px-4 flex items-center justify-center gap-3 shrink-0">
-        <div className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></div>
-        <p className="text-xs font-medium text-cyan-200 tracking-wide uppercase text-center">
-          Notice: All new registrations require manual administrator approval to ensure high-quality discussion.
-        </p>
-      </div>
+      <GlobalNotice />
 
       {/* Main Content */}
       <main className="relative z-10 flex-1 flex flex-col">
@@ -190,6 +187,7 @@ export default function Layout() {
         <div className="max-w-7xl mx-auto h-full flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] text-zinc-600 uppercase tracking-widest">
           <div>&copy; {new Date().getFullYear()} HIJABII. ALL RIGHTS RESERVED.</div>
           <div className="flex flex-wrap justify-center gap-4 md:gap-8">
+            <Link to="/about" className="hover:text-zinc-400 transition-colors">About Us</Link>
             <Link to="/terms" className="hover:text-zinc-400 transition-colors">Terms</Link>
             <Link to="/privacy" className="hover:text-zinc-400 transition-colors">Privacy</Link>
             <Link to="/contact" className="hover:text-zinc-400 transition-colors">Contact</Link>
