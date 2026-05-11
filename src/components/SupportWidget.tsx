@@ -50,12 +50,17 @@ export default function SupportWidget() {
 
   const fetchMessages = async () => {
     if (!user) return;
-    const { data } = await supabase!
-      .from('messages')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: true });
-    if (data) setMessages(data);
+    try {
+      const { data, error } = await supabase!
+        .from('messages')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
+      if (data) setMessages(data);
+      if (error) console.error("Could not fetch messages:", error.message);
+    } catch(err) {
+      console.error("Error fetching messages:", err);
+    }
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -79,9 +84,13 @@ export default function SupportWidget() {
       if (!error) {
         setInputValue("");
         setImageFile(null);
+      } else {
+        console.error("Supabase insert error:", error);
+        alert("Action blocked: please ensure you have set up the support database tables and have correct permissions.");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to send message", err);
+      alert("Error: " + err.message);
     } finally {
       setUploading(false);
     }

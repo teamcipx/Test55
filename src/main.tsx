@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import PendingApproval from './pages/PendingApproval';
 import Dashboard from './pages/Dashboard';
+import Profile from './pages/Profile';
 
 // Admin Pages
 import AdminLayout from './pages/admin/AdminLayout';
@@ -26,6 +27,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/signup" element={<Signup />} />
           <Route path="/pending-approval" element={<PendingApproval />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/profile" element={<Profile />} />
         </Route>
 
         <Route path="/admin" element={<AdminLayout />}>

@@ -1,6 +1,6 @@
 {
-  "name": "Akto Forum",
-  "description": "A professional forum web app with an admin-approved signup flow, utilizing Supabase for database and ImgBB for image hosting.",
+  "name": "Hijabii",
+  "description": "An anonymous, highly secure platform enabling connection across 80+ countries with profiles, chat, multimedia sharing, and stories.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }

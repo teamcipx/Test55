@@ -116,14 +116,25 @@ export default function Signup() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto w-full py-12 px-4">
-      <div className="bg-zinc-900/30 border border-zinc-800 rounded-xl p-6 md:p-10 backdrop-blur-sm">
-        <div className="mb-8 max-w-sm">
-          <h2 className="text-2xl font-serif text-white mb-2">Create Account</h2>
-          <p className="text-sm text-zinc-500">Fill your details for administrator review.</p>
-        </div>
+    <div className="relative min-h-[calc(100vh-104px)] flex flex-col py-12 px-4 -mt-2">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <img 
+          src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80" 
+          alt="Fashion modeling" 
+          className="w-full h-full object-cover opacity-10"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#050505] via-[#050505]/95 to-[#050505]"></div>
+      </div>
 
-        {globalError && (
+      <div className="relative z-10 max-w-4xl mx-auto w-full">
+        <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-xl p-6 md:p-10 backdrop-blur-xl shadow-2xl">
+          <div className="mb-8 max-w-sm">
+            <h2 className="text-2xl font-serif text-white mb-2">Create Account</h2>
+            <p className="text-sm text-zinc-500">Fill your details for administrator review.</p>
+          </div>
+
+          {globalError && (
           <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-md mb-8 flex items-start gap-3 text-sm">
             <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
             <span>{globalError}</span>
@@ -278,6 +289,7 @@ export default function Signup() {
           <Link to="/login" className="text-cyan-400 hover:text-cyan-300 font-bold transition-colors">
             Login here
           </Link>
+        </div>
         </div>
       </div>
     </div>

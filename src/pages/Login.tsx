@@ -53,14 +53,25 @@ export default function Login() {
   };
 
   return (
-    <div className="max-w-md mx-auto w-full mt-10 md:mt-20">
-      <div className="bg-zinc-900/30 border border-zinc-800 rounded-xl p-8 backdrop-blur-sm">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-serif text-white mb-2">Welcome Back</h2>
-          <p className="text-sm text-zinc-500">Sign in to your Akto Forum account</p>
-        </div>
+    <div className="relative min-h-[calc(100vh-104px)] flex flex-col justify-center py-12 px-4 -mt-2">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <img 
+          src="https://images.unsplash.com/photo-1510257321033-6bc31289fe80?auto=format&fit=crop&q=80" 
+          alt="Dark portrait" 
+          className="w-full h-full object-cover opacity-20"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#050505] via-[#050505]/80 to-[#050505]"></div>
+      </div>
 
-        {error && (
+      <div className="relative z-10 max-w-md mx-auto w-full">
+        <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-xl p-8 backdrop-blur-xl shadow-2xl">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-serif text-white mb-2">Welcome Back</h2>
+            <p className="text-sm text-zinc-500">Sign in to your Hijabii account</p>
+          </div>
+
+          {error && (
           <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-md mb-6 flex items-start gap-2 text-sm">
             <AlertCircle className="w-5 h-5 shrink-0" />
             <span>{error}</span>
@@ -124,6 +135,7 @@ export default function Login() {
           <Link to="/signup" className="text-cyan-400 hover:text-cyan-300 font-bold transition-colors">
             Apply for access
           </Link>
+        </div>
         </div>
       </div>
     </div>

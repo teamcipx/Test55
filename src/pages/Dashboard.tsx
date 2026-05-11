@@ -4,7 +4,7 @@ export default function Dashboard() {
       <h1 className="text-3xl font-serif text-white mb-6">Dashboard</h1>
       <div className="bg-zinc-900/30 border border-zinc-800 rounded-xl p-8 backdrop-blur-sm">
         <p className="text-sm text-zinc-400">
-          Welcome to the Akto Forum! You have successfully been approved and logged in.
+          Welcome to Hijabii! You have successfully been approved and logged in.
         </p>
       </div>
     </div>

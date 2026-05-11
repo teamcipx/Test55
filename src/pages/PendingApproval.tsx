@@ -14,7 +14,7 @@ export default function PendingApproval() {
         </h2>
         
         <p className="text-sm text-zinc-400 mb-8 leading-relaxed max-w-sm">
-          Thank you for applying to Akto Forum. Your account is currently pending admin approval to ensure community quality. You will be able to log in once approved.
+          Thank you for applying to Hijabii. Your account is currently pending admin approval to ensure community quality. You will be able to log in once approved.
         </p>
 
         <Link 

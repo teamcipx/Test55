@@ -14,9 +14,9 @@ export default function AdminLayout() {
     <div className="min-h-screen bg-[#050505] text-slate-200 font-sans flex flex-col">
       <header className="h-16 border-b border-zinc-800 bg-zinc-950/80 px-8 flex items-center justify-between shrink-0">
         <Link to="/" className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-cyan-600 rounded flex items-center justify-center font-bold text-white shadow-lg shadow-cyan-900/20">A</div>
+          <div className="w-8 h-8 bg-cyan-600 rounded flex items-center justify-center font-bold text-white shadow-lg shadow-cyan-900/20">H</div>
           <span className="text-xl font-serif tracking-tight text-white">
-            AKTO<span className="text-cyan-500 font-sans font-bold text-xs uppercase tracking-[0.2em] ml-1">Admin</span>
+            HIJABII<span className="text-cyan-500 font-sans font-bold text-xs uppercase tracking-[0.2em] ml-1">Admin</span>
           </span>
         </Link>
         <div className="flex items-center gap-2 px-3 py-1 rounded bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold uppercase tracking-widest">
