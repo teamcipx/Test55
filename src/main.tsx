@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import Community from './pages/Community';
 import Thread from './pages/Thread';
+import UserProfile from './pages/UserProfile';
 
 // Admin Pages
 import AdminLayout from './pages/admin/AdminLayout';
@@ -32,6 +33,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/profile" element={<Profile />} />
           <Route path="/community" element={<Community />} />
           <Route path="/thread/:id" element={<Thread />} />
+          <Route path="/user/:id" element={<UserProfile />} />
         </Route>
 
         <Route path="/admin" element={<AdminLayout />}>

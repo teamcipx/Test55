@@ -285,14 +285,18 @@ export default function Community() {
             <div key={post.id} className="bg-zinc-900/30 border border-zinc-800 rounded-xl p-5 backdrop-blur-sm">
               <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center gap-3">
-                  <img 
-                    src={post.author?.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80"} 
-                    alt="avatar" 
-                    className="w-10 h-10 rounded-full object-cover border border-zinc-700" 
-                  />
+                  <Link to={`/user/${post.author_id}`} className="shrink-0">
+                    <img 
+                      src={post.author?.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80"} 
+                      alt="avatar" 
+                      className="w-10 h-10 rounded-full object-cover border border-zinc-700 hover:border-cyan-500 transition-colors" 
+                    />
+                  </Link>
                   <div>
                     <h4 className="text-white font-medium text-sm flex items-center gap-2">
-                      {post.author?.display_name || "User"}
+                      <Link to={`/user/${post.author_id}`} className="hover:text-cyan-400 transition-colors">
+                        {post.author?.display_name || "User"}
+                      </Link>
                       {post.type === 'thread' && <span className="px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-bold bg-cyan-900/30 text-cyan-400 border border-cyan-800/50">Thread</span>}
                       {post.type === 'reply' && <span className="px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-bold bg-zinc-800 text-zinc-400 border border-zinc-700">Reply</span>}
                     </h4>

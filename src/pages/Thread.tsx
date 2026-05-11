@@ -135,14 +135,18 @@ export default function Thread() {
       {/* Main Thread Post */}
       <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-5 md:p-8 mb-8 backdrop-blur-sm">
         <div className="flex items-center gap-4 mb-6">
-          <img 
-            src={thread.author?.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80"} 
-            alt="avatar" 
-            className="w-12 h-12 rounded-full object-cover border border-zinc-700" 
-          />
+          <Link to={`/user/${thread.author_id}`} className="shrink-0">
+            <img 
+              src={thread.author?.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80"} 
+              alt="avatar" 
+              className="w-12 h-12 rounded-full object-cover border border-zinc-700 hover:border-cyan-500 transition-colors" 
+            />
+          </Link>
           <div>
             <h4 className="text-white font-medium flex items-center gap-2">
-              {thread.author?.display_name || "User"}
+              <Link to={`/user/${thread.author_id}`} className="hover:text-cyan-400 transition-colors">
+                {thread.author?.display_name || "User"}
+              </Link>
               <span className="px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-bold bg-cyan-900/30 text-cyan-400 border border-cyan-800/50">Thread Creator</span>
             </h4>
             <p className="text-xs text-zinc-500">{formatDistanceToNow(new Date(thread.created_at), { addSuffix: true })}</p>
@@ -185,16 +189,18 @@ export default function Thread() {
       <div className="space-y-4 mb-8">
         {replies.map(reply => (
           <div key={reply.id} className="bg-zinc-900/30 border border-zinc-800/80 rounded-xl p-5 flex gap-4">
-            <div className="shrink-0">
+            <Link to={`/user/${reply.author_id}`} className="shrink-0">
               <img 
                 src={reply.author?.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=40"} 
                 alt="avatar" 
-                className="w-10 h-10 rounded-full object-cover border border-zinc-700" 
+                className="w-10 h-10 rounded-full object-cover border border-zinc-700 hover:border-cyan-500 transition-colors" 
               />
-            </div>
+            </Link>
             <div className="flex-1 min-w-0">
               <div className="flex items-baseline gap-2 mb-2">
-                <span className="text-zinc-200 font-medium text-sm">{reply.author?.display_name || "User"}</span>
+                <Link to={`/user/${reply.author_id}`} className="text-zinc-200 font-medium text-sm hover:text-cyan-400 transition-colors">
+                  {reply.author?.display_name || "User"}
+                </Link>
                 <span className="text-zinc-600 text-[10px] uppercase font-bold tracking-widest">{formatDistanceToNow(new Date(reply.created_at), { addSuffix: true })}</span>
               </div>
               <div 
