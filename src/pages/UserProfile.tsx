@@ -139,6 +139,16 @@ export default function UserProfile() {
                 </div>
               )}
             </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-center md:justify-start gap-3 mb-6">
+              <Link 
+                to={`/inbox?u=${profile.id}`}
+                className="flex items-center gap-2 bg-white text-zinc-900 hover:bg-zinc-200 px-5 py-2 rounded-full text-sm font-bold transition-colors"
+              >
+                <MessageSquare className="w-4 h-4" /> Message
+              </Link>
+            </div>
             
             {profile.interest && (
               <div>

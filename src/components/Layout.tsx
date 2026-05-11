@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate, useLocation } from "react-router";
-import { HelpCircle, LogIn, Menu, X, Globe, LogOut, User as UserIcon, ShieldAlert, LayoutDashboard } from "lucide-react";
+import { HelpCircle, LogIn, Menu, X, Globe, LogOut, User as UserIcon, ShieldAlert, LayoutDashboard, Bell, Mail } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "../lib/utils";
 import SupportWidget from "./SupportWidget";
@@ -11,6 +11,8 @@ export default function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userSession, setUserSession] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -19,15 +21,21 @@ export default function Layout() {
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUserSession(session);
-      if (session?.user) fetchProfile(session.user.id);
+      if (session?.user) {
+        fetchProfile(session.user.id);
+        fetchUnreadCounts(session.user.id);
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUserSession(session);
       if (session?.user) {
          fetchProfile(session.user.id);
+         fetchUnreadCounts(session.user.id);
       } else {
          setProfile(null);
+         setUnreadNotifications(0);
+         setUnreadMessages(0);
       }
     });
 
@@ -37,6 +45,23 @@ export default function Layout() {
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
     if (data) setProfile(data);
+  };
+
+  const fetchUnreadCounts = async (userId: string) => {
+    const { count: notifCount } = await supabase
+      .from('notifications')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('is_read', false);
+    
+    const { count: msgCount } = await supabase
+      .from('direct_messages')
+      .select('*', { count: 'exact', head: true })
+      .eq('receiver_id', userId)
+      .eq('is_read', false);
+
+    setUnreadNotifications(notifCount || 0);
+    setUnreadMessages(msgCount || 0);
   };
 
   const handleLogout = async () => {
@@ -72,7 +97,25 @@ export default function Layout() {
 
               {userSession ? (
                 <>
-                  <Link to="/dashboard" className="text-sm font-medium text-zinc-400 hover:text-cyan-400 transition-colors flex items-center gap-1.5">
+                  <Link to="/inbox" className="relative p-2 text-zinc-400 hover:text-cyan-400 transition-colors group">
+                    <Mail className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                    {unreadMessages > 0 && (
+                      <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-cyan-500 text-white text-[10px] flex items-center justify-center rounded-full border-2 border-zinc-950 font-bold">
+                        {unreadMessages > 9 ? '9+' : unreadMessages}
+                      </span>
+                    )}
+                  </Link>
+
+                  <Link to="/notifications" className="relative p-2 text-zinc-400 hover:text-cyan-400 transition-colors group">
+                    <Bell className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                    {unreadNotifications > 0 && (
+                      <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] flex items-center justify-center rounded-full border-2 border-zinc-950 font-bold">
+                        {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                      </span>
+                    )}
+                  </Link>
+
+                  <Link to="/dashboard" className="text-sm font-medium text-zinc-400 hover:text-cyan-400 transition-colors flex items-center gap-1.5 ml-2">
                     <LayoutDashboard className="w-4 h-4" /> Dashboard
                   </Link>
                   {profile?.is_admin && (
@@ -109,6 +152,27 @@ export default function Layout() {
             </div>
 
             <div className="flex md:hidden items-center gap-4">
+              {userSession && (
+                <>
+                  <Link to="/inbox" className="relative p-1 text-zinc-400 hover:text-cyan-400 transition-colors">
+                    <Mail className="w-5 h-5" />
+                    {unreadMessages > 0 && (
+                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-cyan-500 text-white text-[10px] flex items-center justify-center rounded-full border-2 border-zinc-950 font-bold">
+                        {unreadMessages > 9 ? '9+' : unreadMessages}
+                      </span>
+                    )}
+                  </Link>
+
+                  <Link to="/notifications" className="relative p-1 text-zinc-400 hover:text-cyan-400 transition-colors">
+                    <Bell className="w-5 h-5" />
+                    {unreadNotifications > 0 && (
+                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] flex items-center justify-center rounded-full border-2 border-zinc-950 font-bold">
+                        {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                      </span>
+                    )}
+                  </Link>
+                </>
+              )}
               {profile?.is_admin && (
                 <Link to="/admin" className="text-red-400">
                   <ShieldAlert className="w-5 h-5" />

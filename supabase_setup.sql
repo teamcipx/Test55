@@ -102,6 +102,43 @@ create table if not exists public.contact_messages (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+-- 8. Direct Messages Table
+create table if not exists public.direct_messages (
+  id uuid default gen_random_uuid() primary key,
+  sender_id uuid references public.profiles(id) not null,
+  receiver_id uuid references public.profiles(id) not null,
+  content text not null,
+  is_read boolean default false,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 9. Notifications Table
+create table if not exists public.notifications (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references public.profiles(id) not null,
+  actor_id uuid references public.profiles(id),
+  type text not null, -- 'message', 'like', 'reply'
+  reference_id uuid,
+  content text,
+  is_read boolean default false,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Trigger to create notification on new direct message
+create or replace function on_new_direct_message()
+returns trigger as $$
+begin
+  insert into public.notifications (user_id, actor_id, type, reference_id, content)
+  values (new.receiver_id, new.sender_id, 'message', new.id, 'Sent you a direct message');
+  return new;
+end;
+$$ language plpgsql;
+
+drop trigger if exists trigger_new_direct_message on public.direct_messages;
+create trigger trigger_new_direct_message
+  after insert on public.direct_messages
+  for each row execute function on_new_direct_message();
+
 -- ============================================================================
 -- How to set an Admin user manually (run this in Supabase SQL Editor):
 -- UPDATE public.profiles SET is_admin = true, is_approved = true WHERE id = (SELECT id FROM auth.users WHERE email = 'your_email@example.com');

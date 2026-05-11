@@ -17,7 +17,7 @@ export default function AdminSettings() {
     setLoading(true);
     
     // Fetch keys
-    const { data: keysData } = await supabase!.from('settings').select('value').eq('id', 'imgbb_keys').single();
+    const { data: keysData } = await supabase!.from('settings').select('value').eq('id', 'imgbb_keys').maybeSingle();
     if (keysData && Array.isArray(keysData.value)) {
       setKeys(keysData.value);
     } else {
@@ -25,7 +25,7 @@ export default function AdminSettings() {
     }
 
     // Fetch notice
-    const { data: noticeData } = await supabase!.from('settings').select('value').eq('id', 'global_notice').single();
+    const { data: noticeData } = await supabase!.from('settings').select('value').eq('id', 'global_notice').maybeSingle();
     if (noticeData && noticeData.value) {
       setNotice(noticeData.value as any);
     }

@@ -28,7 +28,7 @@ export default function GlobalNotice() {
   }, []);
 
   const fetchNotice = async () => {
-    const { data } = await supabase.from('settings').select('value').eq('id', 'global_notice').single();
+    const { data } = await supabase.from('settings').select('value').eq('id', 'global_notice').maybeSingle();
     if (data && data.value) {
       setNotice(data.value as any);
     }
