@@ -32,6 +32,7 @@ export default function Layout() {
       if (session?.user) {
          fetchProfile(session.user.id);
          fetchUnreadCounts(session.user.id);
+         updateLastSeen(session.user.id);
       } else {
          setProfile(null);
          setUnreadNotifications(0);
@@ -39,8 +40,27 @@ export default function Layout() {
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    let pingInterval: NodeJS.Timeout;
+    if (userSession?.user) {
+      updateLastSeen(userSession.user.id);
+      pingInterval = setInterval(() => {
+        updateLastSeen(userSession.user.id);
+      }, 60000); // 1 minute
+    }
+
+    return () => {
+      subscription.unsubscribe();
+      if (pingInterval) clearInterval(pingInterval);
+    };
+  }, [userSession?.user?.id]);
+
+  const updateLastSeen = async (userId: string) => {
+    try {
+      await supabase.from('profiles').update({ last_seen: new Date().toISOString() }).eq('id', userId);
+    } catch (err) {
+      console.error('Error updating last seen', err);
+    }
+  };
 
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();

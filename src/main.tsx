@@ -15,6 +15,7 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import Inbox from './pages/Inbox';
 import Notifications from './pages/Notifications';
+import Features from './pages/Features';
 
 // Admin Pages
 import AdminLayout from './pages/admin/AdminLayout';
@@ -35,6 +36,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/pending-approval" element={<PendingApproval />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/features" element={<Features />} />
           <Route path="/community" element={<Community />} />
           <Route path="/thread/:id" element={<Thread />} />
           <Route path="/user/:id" element={<UserProfile />} />

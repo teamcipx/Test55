@@ -74,6 +74,12 @@ export default function UserProfile() {
     );
   };
 
+  const isUserOnline = (lastSeen?: string) => {
+    if (!lastSeen) return false;
+    const diff = new Date().getTime() - new Date(lastSeen).getTime();
+    return diff < 5 * 60 * 1000; // 5 minutes
+  };
+
   if (loading) {
     return <div className="flex justify-center p-12 min-h-screen"><div className="w-8 h-8 rounded-full border-2 border-cyan-500/20 border-t-cyan-500 animate-spin" /></div>;
   }
@@ -101,7 +107,7 @@ export default function UserProfile() {
         <div className={`absolute top-0 right-0 w-64 h-64 blur-[100px] rounded-full pointer-events-none opacity-20 ${profile.is_admin ? 'bg-red-500' : 'bg-cyan-500'}`} />
         
         <div className="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-10 relative z-10">
-          <div className="shrink-0">
+          <div className="shrink-0 relative">
             <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-zinc-800 overflow-hidden bg-zinc-900 shadow-2xl">
               {profile.avatar_url ? (
                 <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
@@ -111,6 +117,9 @@ export default function UserProfile() {
                 </div>
               )}
             </div>
+            {isUserOnline(profile.last_seen) && (
+              <div className="absolute bottom-4 right-4 w-6 h-6 bg-emerald-500 border-4 border-[#050505] rounded-full" title="Online now" />
+            )}
           </div>
           
           <div className="flex-1 text-center md:text-left">

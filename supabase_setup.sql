@@ -14,6 +14,7 @@ create table if not exists public.profiles (
   age int,
   is_admin boolean default false,
   is_approved boolean default false,
+  last_seen timestamp with time zone default timezone('utc'::text, now()),
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 

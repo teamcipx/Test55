@@ -268,6 +268,12 @@ export default function Community() {
     }
   };
 
+  const isUserOnline = (lastSeen?: string) => {
+    if (!lastSeen) return false;
+    const diff = new Date().getTime() - new Date(lastSeen).getTime();
+    return diff < 5 * 60 * 1000; // 5 minutes
+  };
+
   return (
     <div className="max-w-4xl mx-auto w-full py-6 md:py-10 px-4 min-h-screen">
       <div className="flex items-center justify-between mb-8">
@@ -376,12 +382,15 @@ export default function Community() {
             <div key={post.id} className="bg-zinc-900/30 border border-zinc-800 rounded-xl p-5 backdrop-blur-sm">
               <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center gap-3">
-                  <Link to={`/user/${post.author_id}`} className="shrink-0">
+                  <Link to={`/user/${post.author_id}`} className="shrink-0 relative block">
                     <img 
                       src={post.author?.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80"} 
                       alt="avatar" 
                       className="w-10 h-10 rounded-full object-cover border border-zinc-700 hover:border-cyan-500 transition-colors" 
                     />
+                    {isUserOnline(post.author?.last_seen) && (
+                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-zinc-900 rounded-full" />
+                    )}
                   </Link>
                   <div>
                     <h4 className="text-white font-medium text-sm flex items-center gap-2">

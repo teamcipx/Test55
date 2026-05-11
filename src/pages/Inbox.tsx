@@ -140,6 +140,12 @@ export default function Inbox() {
     setSending(false);
   };
 
+  const isUserOnline = (lastSeen?: string) => {
+    if (!lastSeen) return false;
+    const diff = new Date().getTime() - new Date(lastSeen).getTime();
+    return diff < 5 * 60 * 1000; // 5 minutes
+  };
+
   if (!currentUser) {
     return <div className="text-center py-20 text-zinc-400">Please sign in to view your inbox.</div>;
   }
@@ -167,11 +173,16 @@ export default function Inbox() {
                   className={`block p-4 hover:bg-zinc-800/50 transition-colors ${activeUserId === convo.user.id ? 'bg-zinc-800/80 border-l-2 border-cyan-500' : ''}`}
                 >
                   <div className="flex gap-3 items-center">
-                    <img 
-                      src={convo.user.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=40"} 
-                      alt="avatar" 
-                      className="w-12 h-12 rounded-full object-cover border border-zinc-700 bg-zinc-800" 
-                    />
+                    <div className="relative">
+                      <img 
+                        src={convo.user.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=40"} 
+                        alt="avatar" 
+                        className="w-12 h-12 rounded-full object-cover border border-zinc-700 bg-zinc-800" 
+                      />
+                      {isUserOnline(convo.user.last_seen) && (
+                        <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-zinc-900 rounded-full" />
+                      )}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-baseline mb-1">
                         <h4 className="text-zinc-200 font-medium text-sm truncate">{convo.user.display_name || "User"}</h4>
@@ -216,14 +227,19 @@ export default function Inbox() {
                 </Link>
                 {activeChatUser && (
                   <Link to={`/user/${activeChatUser.id}`} className="flex items-center gap-3">
-                    <img 
-                      src={activeChatUser.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=40"} 
-                      alt="avatar" 
-                      className="w-10 h-10 rounded-full object-cover border border-zinc-700 bg-zinc-800" 
-                    />
+                    <div className="relative">
+                      <img 
+                        src={activeChatUser.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=40"} 
+                        alt="avatar" 
+                        className="w-10 h-10 rounded-full object-cover border border-zinc-700 bg-zinc-800" 
+                      />
+                      {isUserOnline(activeChatUser.last_seen) && (
+                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-zinc-950 rounded-full" />
+                      )}
+                    </div>
                     <div>
                       <h3 className="text-zinc-200 font-medium hover:text-cyan-400 transition-colors">{activeChatUser.display_name || "User"}</h3>
-                      <p className="text-xs text-zinc-500">@{activeChatUser.username}</p>
+                      <p className="text-xs text-zinc-500">@{activeChatUser.username} {isUserOnline(activeChatUser.last_seen) && "• Active now"}</p>
                     </div>
                   </Link>
                 )}
