@@ -61,6 +61,13 @@ create table if not exists public.posts (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+-- Ensure new columns exist for posts
+ALTER TABLE public.posts ADD COLUMN IF NOT EXISTS title text;
+ALTER TABLE public.posts ADD COLUMN IF NOT EXISTS likes_count int DEFAULT 0;
+ALTER TABLE public.posts ADD COLUMN IF NOT EXISTS replies_count int DEFAULT 0;
+ALTER TABLE public.posts ADD COLUMN IF NOT EXISTS shares_count int DEFAULT 0;
+ALTER TABLE public.posts ADD COLUMN IF NOT EXISTS thread_id uuid REFERENCES public.posts(id);
+
 -- 5. Likes Table
 create table if not exists public.likes (
   id uuid default gen_random_uuid() primary key,

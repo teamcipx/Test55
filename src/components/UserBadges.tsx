@@ -22,7 +22,7 @@ export default function UserBadges({ user }: { user: any }) {
         </div>
       )}
 
-      {user.is_verified && (
+      {user.is_approved && (
         <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-500 text-[10px] font-bold uppercase tracking-wider title='Verified'">
           <CheckCircle2 className="w-3 h-3" /> Verified
         </div>

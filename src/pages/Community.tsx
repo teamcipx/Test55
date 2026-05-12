@@ -4,8 +4,6 @@ import { supabase, hasSupabaseConfig } from "../lib/supabase";
 import { formatDistanceToNow } from "date-fns";
 import { User, MessageSquare, Heart, Share2, Image as ImageIcon, Send, X, FileText, Trash2 } from "lucide-react";
 import { uploadToImgBB } from "../lib/imgbb";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
 import AdBanner from "../components/ads/AdBanner";
 import AdPopup from "../components/ads/AdPopup";
 import UserBadges from "../components/UserBadges";
@@ -102,20 +100,14 @@ export default function Community() {
     }
   };
 
-  const quillModules = {
-    toolbar: [
-      [{ 'header': [1, 2, false] }],
-      ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-      [{'list': 'ordered'}, {'list': 'bullet'}, {'indent': '-1'}, {'indent': '+1'}],
-      ['link', 'image'],
-      ['clean']
-    ],
-  };
-
   const handlePostSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!currentUser) return alert('Please login to post');
-    if (!content.trim() && !imageFile) return;
+    if (postMode === 'normal' && !content.trim() && !imageFile) return;
+    if (postMode === 'thread' && !threadTitle.trim()) {
+      alert('Thread title is required');
+      return;
+    }
 
     setPublishing(true);
     try {
@@ -322,7 +314,7 @@ export default function Community() {
               </div>
               <div className="flex-1 space-y-3">
                 {postMode === 'thread' ? (
-                  <>
+                  <div className="space-y-3">
                     <input 
                       type="text" 
                       placeholder="Thread Title"
@@ -330,10 +322,13 @@ export default function Community() {
                       value={threadTitle}
                       onChange={e => setThreadTitle(e.target.value)}
                     />
-                    <div className="bg-white rounded text-black p-1">
-                      <ReactQuill theme="snow" value={content} onChange={setContent} modules={quillModules} className="bg-white" />
-                    </div>
-                  </>
+                    <textarea 
+                      placeholder="Write your thread... (Only hijab.site links allowed)"
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-white focus:border-cyan-500 outline-none min-h-[150px] resize-y"
+                      value={content}
+                      onChange={e => setContent(e.target.value)}
+                    />
+                  </div>
                 ) : (
                   <textarea 
                     placeholder="What's on your mind? (Only hijab.site links allowed)"

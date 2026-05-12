@@ -4,8 +4,6 @@ import { supabase, hasSupabaseConfig } from "../lib/supabase";
 import { formatDistanceToNow } from "date-fns";
 import { User, MessageSquare, Heart, Share2, Image as ImageIcon, Send, X, ArrowLeft, Trash2 } from "lucide-react";
 import { uploadToImgBB } from "../lib/imgbb";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
 import AdBanner from "../components/ads/AdBanner";
 import UserBadges from "../components/UserBadges";
 
