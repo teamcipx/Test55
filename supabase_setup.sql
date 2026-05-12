@@ -48,6 +48,16 @@ create table if not exists public.reports (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+-- 1C. Stories Table
+create table if not exists public.stories (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references public.profiles(id) not null,
+  image_url text,
+  text_content text,
+  expires_at timestamp with time zone not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
 -- 2. Messages Table for Support 
 create table if not exists public.messages (
   id uuid default gen_random_uuid() primary key,

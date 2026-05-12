@@ -7,6 +7,7 @@ import { uploadToImgBB } from "../lib/imgbb";
 import AdBanner from "../components/ads/AdBanner";
 import AdPopup from "../components/ads/AdPopup";
 import UserBadges from "../components/UserBadges";
+import Stories from "../components/Stories";
 
 // Remove invalid links from text
 function formatPostContent(html: string) {
@@ -293,6 +294,8 @@ export default function Community() {
           <p className="text-zinc-400 text-sm">Join the conversation securely.</p>
         </div>
       </div>
+      
+      <Stories currentUser={currentUser} />
 
       {/* Editor Box */}
       {currentUser && (
@@ -420,18 +423,20 @@ export default function Community() {
               <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center gap-3">
                   <Link to={`/user/${post.author_id}`} className="shrink-0 relative block">
-                    <img 
-                      src={post.author?.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80"} 
-                      alt="avatar" 
-                      className="w-10 h-10 rounded-full object-cover border border-zinc-700 hover:border-cyan-500 transition-colors" 
-                    />
+                    <div className={`w-10 h-10 rounded-full overflow-hidden ${post.author?.is_premium ? 'p-0.5 bg-gradient-to-tr from-amber-500 via-yellow-200 to-amber-700' : 'border border-zinc-700 hover:border-cyan-500'} transition-all`}>
+                      <img 
+                        src={post.author?.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80"} 
+                        alt="avatar" 
+                        className={`w-full h-full rounded-full object-cover ${post.author?.is_premium ? 'border-2 border-[#0a0a0a]' : ''}`} 
+                      />
+                    </div>
                     {isUserOnline(post.author?.last_seen) && (
-                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-zinc-900 rounded-full" />
+                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-[#0a0a0a] rounded-full" />
                     )}
                   </Link>
                   <div>
-                    <h4 className="text-white font-medium text-sm flex items-center gap-2">
-                       <Link to={`/user/${post.author_id}`} className="hover:text-cyan-400 transition-colors">
+                    <h4 className="font-medium text-sm flex items-center gap-2">
+                       <Link to={`/user/${post.author_id}`} className={`transition-colors ${post.author?.is_premium ? 'bg-clip-text text-transparent bg-gradient-to-r from-amber-400 to-amber-600 font-bold hover:to-amber-400' : 'text-white hover:text-cyan-400'}`}>
                          {post.author?.display_name || "User"}
                        </Link>
                        {post.type === 'thread' && <span className="px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-bold bg-cyan-900/30 text-cyan-400 border border-cyan-800/50">Thread</span>}

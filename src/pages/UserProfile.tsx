@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router";
 import { supabase, hasSupabaseConfig } from "../lib/supabase";
-import { User, ShieldAlert, BadgeCheck, MessageSquare, Heart, Clock, ArrowLeft, Send } from "lucide-react";
+import { User, ShieldAlert, BadgeCheck, MessageSquare, Heart, Clock, ArrowLeft, Send, Crown } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import UserBadges from "../components/UserBadges";
 import AdBanner from "../components/ads/AdBanner";
@@ -201,29 +201,45 @@ export default function UserProfile() {
       </Link>
 
       {/* Profile Header */}
-      <div className={`bg-zinc-900/40 border rounded-2xl p-6 md:p-10 backdrop-blur-sm mb-8 relative overflow-hidden ${profile.is_premium ? 'border-amber-500 shadow-xl shadow-amber-500/10' : 'border-zinc-800'}`}>
+      <div className={`bg-zinc-900/40 border rounded-3xl p-6 md:p-10 backdrop-blur-sm mb-8 relative overflow-hidden ${profile.is_premium ? 'border-amber-500/50 shadow-[0_0_40px_rgba(245,158,11,0.15)] bg-gradient-to-b from-amber-500/5 to-zinc-900/40' : 'border-zinc-800'}`}>
         {/* Background glow based on role */}
-        <div className={`absolute top-0 right-0 w-64 h-64 blur-[100px] rounded-full pointer-events-none opacity-20 ${profile.is_admin ? 'bg-red-500' : profile.is_premium ? 'bg-amber-500 opacity-40' : 'bg-cyan-500'}`} />
+        <div className={`absolute top-0 right-0 w-96 h-96 blur-[120px] rounded-full pointer-events-none opacity-20 ${profile.is_admin ? 'bg-red-500' : profile.is_premium ? 'bg-amber-500 opacity-40' : 'bg-cyan-500'}`} />
+        
+        {/* VIP Watermark */}
+        {profile.is_premium && (
+          <div className="absolute -bottom-10 -right-10 text-amber-500/5 pointer-events-none">
+            <Crown className="w-64 h-64" />
+          </div>
+        )}
         
         <div className="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-10 relative z-10">
           <div className="shrink-0 relative">
-            <div className={`w-32 h-32 md:w-40 md:h-40 rounded-full border-4 overflow-hidden bg-zinc-900 shadow-2xl ${profile.is_premium ? 'border-amber-500 shadow-amber-500/40' : 'border-zinc-800'}`}>
-              {profile.avatar_url ? (
-                <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-zinc-600">
-                  <User className="w-16 h-16" />
-                </div>
-              )}
+            <div className={`w-36 h-36 md:w-44 md:h-44 rounded-full overflow-hidden shadow-2xl ${profile.is_premium ? 'p-1.5 bg-gradient-to-tr from-amber-600 via-yellow-300 to-amber-700 shadow-amber-500/40' : 'border-4 border-zinc-800 bg-zinc-900'}`}>
+              <div className={`w-full h-full rounded-full overflow-hidden bg-zinc-900 ${profile.is_premium ? 'border-[4px] border-[#0a0a0a]' : ''}`}>
+                {profile.avatar_url ? (
+                  <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-zinc-600">
+                    <User className="w-16 h-16" />
+                  </div>
+                )}
+              </div>
             </div>
             {isUserOnline(profile.last_seen) && (
-              <div className="absolute bottom-4 right-4 w-6 h-6 bg-emerald-500 border-4 border-[#050505] rounded-full" title="Online now" />
+              <div className="absolute bottom-5 right-5 w-6 h-6 bg-emerald-500 border-4 border-[#0a0a0a] rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)]" title="Online now" />
+            )}
+            {profile.is_premium && (
+              <div className="absolute -bottom-2 md:-bottom-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-600 via-amber-400 to-amber-600 text-black px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest shadow-[0_0_15px_rgba(245,158,11,0.5)] flex items-center gap-1 border-2 border-[#0a0a0a]">
+                <Crown className="w-3 h-3 fill-black" /> VIP
+              </div>
             )}
           </div>
           
-          <div className="flex-1 text-center md:text-left">
-            <h1 className={`text-3xl md:text-4xl font-serif mb-2 ${profile.is_premium ? 'text-amber-500 drop-shadow-md' : 'text-white'}`}>{profile.display_name || "User"}</h1>
-            <p className="text-zinc-400 font-mono text-sm mb-4">@{profile.username || "unknown"}</p>
+          <div className="flex-1 text-center md:text-left pt-2 md:pt-4">
+            <h1 className={`text-3xl md:text-5xl font-serif mb-2 tracking-tight ${profile.is_premium ? 'bg-clip-text text-transparent bg-gradient-to-br from-amber-200 via-amber-400 to-amber-700 drop-shadow-md font-bold' : 'text-white'}`}>
+              {profile.display_name || "User"}
+            </h1>
+            <p className="text-zinc-400 font-mono text-sm mb-5">@{profile.username || "unknown"}</p>
             
             {profile.bio && (
               <p className="text-zinc-300 text-sm mb-4 max-w-lg mx-auto md:mx-0">{profile.bio}</p>
@@ -384,16 +400,18 @@ export default function UserProfile() {
               comments.map(comment => (
                 <div key={comment.id} className="bg-zinc-900/50 p-4 rounded-xl border border-zinc-800 hover:border-zinc-700 transition-colors">
                   <div className="flex items-start gap-4">
-                     <Link to={`/user/${comment.author_id}`} className="shrink-0 w-10 h-10 rounded-full overflow-hidden bg-zinc-800 border border-zinc-700">
+                     <Link to={`/user/${comment.author_id}`} className={`shrink-0 w-10 h-10 rounded-full overflow-hidden ${comment.author?.is_premium ? 'p-0.5 bg-gradient-to-tr from-amber-500 via-yellow-200 to-amber-700' : 'border border-zinc-700 hover:border-cyan-500 bg-zinc-800'} transition-all`}>
                         {comment.author?.avatar_url ? (
-                          <img src={comment.author.avatar_url} className="w-full h-full object-cover" />
+                          <img src={comment.author.avatar_url} className={`w-full h-full rounded-full object-cover ${comment.author?.is_premium ? 'border-2 border-[#0a0a0a]' : ''}`} />
                         ) : (
-                          <User className="w-full h-full p-2 text-zinc-500" />
+                          <div className={`w-full h-full flex items-center justify-center ${comment.author?.is_premium ? 'border-2 border-[#0a0a0a] rounded-full bg-zinc-900' : ''}`}>
+                             <User className="w-full h-full p-2 text-zinc-500" />
+                          </div>
                         )}
                      </Link>
                      <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <Link to={`/user/${comment.author_id}`} className="font-medium text-white hover:text-cyan-400 text-sm">
+                          <Link to={`/user/${comment.author_id}`} className={`font-medium text-sm transition-colors ${comment.author?.is_premium ? 'bg-clip-text text-transparent bg-gradient-to-r from-amber-400 to-amber-600 font-bold hover:to-amber-400' : 'text-white hover:text-cyan-400'}`}>
                              {comment.author?.display_name || comment.author?.username || 'User'}
                           </Link>
                           <span className="text-zinc-600 text-xs">• {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}</span>

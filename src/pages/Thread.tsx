@@ -248,15 +248,17 @@ export default function Thread() {
       <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-5 md:p-8 mb-8 backdrop-blur-sm">
         <div className="flex items-center gap-4 mb-6">
           <Link to={`/user/${thread.author_id}`} className="shrink-0">
-            <img 
-              src={thread.author?.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80"} 
-              alt="avatar" 
-              className="w-12 h-12 rounded-full object-cover border border-zinc-700 hover:border-cyan-500 transition-colors" 
-            />
+            <div className={`w-12 h-12 rounded-full overflow-hidden ${thread.author?.is_premium ? 'p-0.5 bg-gradient-to-tr from-amber-500 via-yellow-200 to-amber-700' : 'border border-zinc-700 hover:border-cyan-500'} transition-all`}>
+              <img 
+                src={thread.author?.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80"} 
+                alt="avatar" 
+                className={`w-full h-full rounded-full object-cover ${thread.author?.is_premium ? 'border-2 border-[#0a0a0a]' : ''}`} 
+              />
+            </div>
           </Link>
           <div>
-            <h4 className="text-white font-medium flex items-center gap-2">
-              <Link to={`/user/${thread.author_id}`} className="hover:text-cyan-400 transition-colors">
+            <h4 className="font-medium flex items-center gap-2">
+              <Link to={`/user/${thread.author_id}`} className={`transition-colors ${thread.author?.is_premium ? 'bg-clip-text text-transparent bg-gradient-to-r from-amber-400 to-amber-600 font-bold hover:to-amber-400' : 'text-white hover:text-cyan-400'}`}>
                 {thread.author?.display_name || "User"}
               </Link>
               <span className="px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-bold bg-cyan-900/30 text-cyan-400 border border-cyan-800/50">Thread Creator</span>
@@ -323,15 +325,17 @@ export default function Thread() {
         {replies.map(reply => (
           <div key={reply.id} className="bg-zinc-900/30 border border-zinc-800/80 rounded-xl p-5 flex gap-4">
             <Link to={`/user/${reply.author_id}`} className="shrink-0">
-              <img 
-                src={reply.author?.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=40"} 
-                alt="avatar" 
-                className="w-10 h-10 rounded-full object-cover border border-zinc-700 hover:border-cyan-500 transition-colors" 
-              />
+              <div className={`w-10 h-10 rounded-full overflow-hidden ${reply.author?.is_premium ? 'p-0.5 bg-gradient-to-tr from-amber-500 via-yellow-200 to-amber-700' : 'border border-zinc-700 hover:border-cyan-500'} transition-all`}>
+                <img 
+                  src={reply.author?.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=40"} 
+                  alt="avatar" 
+                  className={`w-full h-full rounded-full object-cover ${reply.author?.is_premium ? 'border-2 border-[#0a0a0a]' : ''}`} 
+                />
+              </div>
             </Link>
             <div className="flex-1 min-w-0">
-              <div className="flex items-baseline gap-2 mb-2">
-                <Link to={`/user/${reply.author_id}`} className="text-zinc-200 font-medium text-sm hover:text-cyan-400 transition-colors">
+              <div className="flex items-baseline gap-2 mb-2 w-full flex-wrap">
+                <Link to={`/user/${reply.author_id}`} className={`font-medium text-sm transition-colors ${reply.author?.is_premium ? 'bg-clip-text text-transparent bg-gradient-to-r from-amber-400 to-amber-600 font-bold hover:to-amber-400' : 'text-zinc-200 hover:text-cyan-400'}`}>
                   {reply.author?.display_name || "User"}
                 </Link>
                 <span className="text-zinc-600 text-[10px] uppercase font-bold tracking-widest">{formatDistanceToNow(new Date(reply.created_at), { addSuffix: true })}</span>

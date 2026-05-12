@@ -17,8 +17,8 @@ export default function UserBadges({ user }: { user: any }) {
       )}
       
       {user.is_premium && (
-        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500 text-[10px] font-bold uppercase tracking-wider title='VIP Member'">
-          <Crown className="w-3 h-3" /> VIP
+        <div className="flex items-center gap-1 px-2 py-0.5 rounded shadow-[0_0_10px_rgba(245,158,11,0.3)] bg-gradient-to-r from-amber-600 via-amber-400 to-amber-600 text-black text-[10px] font-extrabold uppercase tracking-widest title='VIP Member'">
+          <Crown className="w-3 h-3 fill-black" /> VIP
         </div>
       )}
 
