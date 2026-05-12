@@ -3,6 +3,9 @@ import { useParams, Link } from "react-router";
 import { supabase, hasSupabaseConfig } from "../lib/supabase";
 import { User, ShieldAlert, BadgeCheck, MessageSquare, Heart, Clock, ArrowLeft, Send } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import UserBadges from "../components/UserBadges";
+import AdBanner from "../components/ads/AdBanner";
+import AdPopup from "../components/ads/AdPopup";
 
 export default function UserProfile() {
   const { id } = useParams();
@@ -180,18 +183,19 @@ export default function UserProfile() {
 
   return (
     <div className="max-w-4xl mx-auto w-full py-8 md:py-12 px-4 min-h-[calc(100vh-104px)]">
+      <AdPopup />
       <Link to="/community" className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-white mb-6 transition-colors">
         <ArrowLeft className="w-4 h-4" /> Back
       </Link>
 
       {/* Profile Header */}
-      <div className={`bg-zinc-900/40 border rounded-2xl p-6 md:p-10 backdrop-blur-sm mb-8 relative overflow-hidden ${profile.is_premium ? 'border-amber-500/50' : 'border-zinc-800'}`}>
+      <div className={`bg-zinc-900/40 border rounded-2xl p-6 md:p-10 backdrop-blur-sm mb-8 relative overflow-hidden ${profile.is_premium ? 'border-amber-500 shadow-xl shadow-amber-500/10' : 'border-zinc-800'}`}>
         {/* Background glow based on role */}
-        <div className={`absolute top-0 right-0 w-64 h-64 blur-[100px] rounded-full pointer-events-none opacity-20 ${profile.is_admin ? 'bg-red-500' : profile.is_premium ? 'bg-amber-500' : 'bg-cyan-500'}`} />
+        <div className={`absolute top-0 right-0 w-64 h-64 blur-[100px] rounded-full pointer-events-none opacity-20 ${profile.is_admin ? 'bg-red-500' : profile.is_premium ? 'bg-amber-500 opacity-40' : 'bg-cyan-500'}`} />
         
         <div className="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-10 relative z-10">
           <div className="shrink-0 relative">
-            <div className={`w-32 h-32 md:w-40 md:h-40 rounded-full border-4 overflow-hidden bg-zinc-900 shadow-2xl ${profile.is_premium ? 'border-amber-500 shadow-amber-500/20' : 'border-zinc-800'}`}>
+            <div className={`w-32 h-32 md:w-40 md:h-40 rounded-full border-4 overflow-hidden bg-zinc-900 shadow-2xl ${profile.is_premium ? 'border-amber-500 shadow-amber-500/40' : 'border-zinc-800'}`}>
               {profile.avatar_url ? (
                 <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
               ) : (
@@ -206,25 +210,12 @@ export default function UserProfile() {
           </div>
           
           <div className="flex-1 text-center md:text-left">
-            <h1 className="text-3xl md:text-4xl font-serif text-white mb-2">{profile.display_name || "User"}</h1>
+            <h1 className={`text-3xl md:text-4xl font-serif mb-2 ${profile.is_premium ? 'text-amber-500 drop-shadow-md' : 'text-white'}`}>{profile.display_name || "User"}</h1>
             <p className="text-zinc-400 font-mono text-sm mb-4">@{profile.username || "unknown"}</p>
             
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-6">
-              {profile.is_admin && (
-                <div className="flex items-center gap-1.5 px-3 py-1 bg-red-500/10 border border-red-500/20 text-red-500 rounded-full text-xs font-bold uppercase tracking-widest">
-                  <ShieldAlert className="w-4 h-4" /> Admin
-                </div>
-              )}
-              {profile.is_premium && (
-                <div className="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/30 text-amber-500 rounded-full text-xs font-bold uppercase tracking-widest">
-                  <BadgeCheck className="w-4 h-4 fill-amber-500 text-black" /> Premium
-                </div>
-              )}
-              {profile.is_approved && !profile.is_premium && (
-                <div className="flex items-center gap-1.5 px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-full text-xs font-bold uppercase tracking-widest">
-                  <BadgeCheck className="w-4 h-4" /> Verified
-                </div>
-              )}
+              <UserBadges user={profile} />
+              
               {profile.country && (
                 <div className="px-3 py-1 bg-zinc-800/50 border border-zinc-700/50 text-zinc-300 rounded-full text-xs font-medium">
                   🌍 {profile.country}
@@ -233,6 +224,11 @@ export default function UserProfile() {
               {profile.age && (
                 <div className="px-3 py-1 bg-zinc-800/50 border border-zinc-700/50 text-zinc-300 rounded-full text-xs font-medium">
                   {profile.age} yrs
+                </div>
+              )}
+              {profile.relationship_status && (
+                <div className="px-3 py-1 bg-pink-500/10 border border-pink-500/20 text-pink-400 rounded-full text-xs font-medium uppercase tracking-wider">
+                  ❤️ {profile.relationship_status}
                 </div>
               )}
             </div>

@@ -7,6 +7,7 @@ import { uploadToImgBB } from "../lib/imgbb";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import AdBanner from "../components/ads/AdBanner";
+import UserBadges from "../components/UserBadges";
 
 // Remove invalid links from text
 function formatPostContent(html: string) {
@@ -255,7 +256,8 @@ export default function Thread() {
               </Link>
               <span className="px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-bold bg-cyan-900/30 text-cyan-400 border border-cyan-800/50">Thread Creator</span>
             </h4>
-            <p className="text-xs text-zinc-500">{formatDistanceToNow(new Date(thread.created_at), { addSuffix: true })}</p>
+            <UserBadges user={thread.author} />
+            <p className="text-xs text-zinc-500 mt-1">{formatDistanceToNow(new Date(thread.created_at), { addSuffix: true })}</p>
           </div>
         </div>
 
@@ -328,6 +330,9 @@ export default function Thread() {
                   {reply.author?.display_name || "User"}
                 </Link>
                 <span className="text-zinc-600 text-[10px] uppercase font-bold tracking-widest">{formatDistanceToNow(new Date(reply.created_at), { addSuffix: true })}</span>
+              </div>
+              <div className="-mt-1 mb-2">
+                <UserBadges user={reply.author} />
               </div>
               <div 
                 className="text-sm text-zinc-300 leading-relaxed prose prose-invert prose-p:my-1 prose-a:text-cyan-400"

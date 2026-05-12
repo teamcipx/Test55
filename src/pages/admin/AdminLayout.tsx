@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from "react-router";
-import { Users, Settings, MessageSquare, ShieldAlert, Menu, X } from "lucide-react";
+import { Users, Settings, MessageSquare, ShieldAlert, Menu, X, Play } from "lucide-react";
 import { useState } from "react";
 
 export default function AdminLayout() {
@@ -9,6 +9,7 @@ export default function AdminLayout() {
   const navItems = [
     { name: "Members & Approvals", path: "/admin/users", icon: Users },
     { name: "Support Tickets", path: "/admin/support", icon: MessageSquare },
+    { name: "Premium Videos", path: "/admin/videos", icon: Play },
     { name: "System Settings", path: "/admin/settings", icon: Settings },
   ];
 

@@ -7,18 +7,22 @@ export default function PremiumContent() {
   const navigate = useNavigate();
   const [isPremium, setIsPremium] = useState(false);
   const [loading, setLoading] = useState(true);
-
-  const fakeVideos = [
-    { id: 1, title: "Exclusive Interview: The Founders", duration: "45:12", img: "https://images.unsplash.com/photo-1516280440502-c6722d56abf0?auto=format&fit=crop&w=500" },
-    { id: 2, title: "Behind the Scenes 2026", duration: "12:05", img: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=500" },
-    { id: 3, title: "Next-Gen UI Masterclass", duration: "1:20:00", img: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=500" },
-    { id: 4, title: "Community Meetup Highlights", duration: "08:45", img: "https://images.unsplash.com/photo-1475721025585-249cb5ce8ce8?auto=format&fit=crop&w=500" },
-    { id: 5, title: "Advanced Security & Z++", duration: "32:10", img: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=500" },
-    { id: 6, title: "Future of The Platform", duration: "55:30", img: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=500" },
-  ];
+  const [videos, setVideos] = useState<any[]>([]);
 
   useEffect(() => {
     if (hasSupabaseConfig) {
+      supabase.from('settings').select('value').eq('id', 'premium_videos').single().then(s => {
+         if (s.data && Array.isArray(s.data.value)) {
+            setVideos(s.data.value);
+         } else {
+            setVideos([
+               { id: 1, title: "Exclusive Interview: The Founders", duration: "45:12", img: "https://images.unsplash.com/photo-1516280440502-c6722d56abf0?auto=format&fit=crop&w=500" },
+               { id: 2, title: "Behind the Scenes 2026", duration: "12:05", img: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=500" },
+               { id: 3, title: "Next-Gen UI Masterclass", duration: "1:20:00", img: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=500" }
+            ]);
+         }
+      });
+
       supabase.auth.getUser().then(({ data }) => {
         if (!data.user) {
           navigate('/login');
@@ -53,7 +57,7 @@ export default function PremiumContent() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-         {fakeVideos.map(video => (
+         {videos.map(video => (
             <div key={video.id} className="relative group rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900/50">
                <div className="relative aspect-video">
                   <img 

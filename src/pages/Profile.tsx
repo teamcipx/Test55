@@ -16,6 +16,7 @@ export default function Profile() {
   const [socialLink, setSocialLink] = useState("");
   const [country, setCountry] = useState("");
   const [interest, setInterest] = useState("");
+  const [relationshipStatus, setRelationshipStatus] = useState("");
   const [age, setAge] = useState("");
   const [phone, setPhone] = useState("");
   
@@ -51,6 +52,7 @@ export default function Profile() {
         setSocialLink(data.telegram_or_fb || "");
         setCountry(data.country || "");
         setInterest(data.interest || "");
+        setRelationshipStatus(data.relationship_status || "");
         setAge(data.age?.toString() || "");
         setPhone(data.phone || "");
         setAvatarPreview(data.avatar_url || null);
@@ -87,6 +89,7 @@ export default function Profile() {
         display_name: displayName,
         real_name: realName,
         interest,
+        relationship_status: relationshipStatus,
         age: parseInt(age) || null,
         avatar_url: avatarUrl
       }).eq('id', user.id);
@@ -310,7 +313,22 @@ export default function Profile() {
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-zinc-800 flex justify-end">
+              <div className="space-y-1 mt-4">
+                <label className="text-[10px] uppercase tracking-wider text-zinc-500">Relationship Status</label>
+                <select 
+                  value={relationshipStatus}
+                  onChange={e => setRelationshipStatus(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none" 
+                >
+                  <option value="">Prefer not to say</option>
+                  <option value="Single">Single</option>
+                  <option value="Married">Married</option>
+                  <option value="Divorced">Divorced</option>
+                  <option value="Widowed">Widowed</option>
+                </select>
+              </div>
+
+              <div className="pt-4 mt-6 border-t border-zinc-800 flex justify-end">
                 <button 
                   type="submit"
                   disabled={saving}

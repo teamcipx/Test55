@@ -8,6 +8,7 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import AdBanner from "../components/ads/AdBanner";
 import AdPopup from "../components/ads/AdPopup";
+import UserBadges from "../components/UserBadges";
 
 // Remove invalid links from text
 function formatPostContent(html: string) {
@@ -65,7 +66,7 @@ export default function Community() {
 
   const fetchPosts = async (feedType: 'forYou' | 'recent' = 'forYou') => {
     setLoading(true);
-    let query = supabase.from('posts').select('*, author:author_id(*)');
+    let query = supabase.from('posts').select('*, author:author_id(*)').neq('type', 'reply');
     
     if (feedType === 'forYou') {
       query = query.order('likes_count', { ascending: false }).order('created_at', { ascending: false });
@@ -426,21 +427,17 @@ export default function Community() {
                   </Link>
                   <div>
                     <h4 className="text-white font-medium text-sm flex items-center gap-2">
-                      <Link to={`/user/${post.author_id}`} className="hover:text-cyan-400 transition-colors">
-                        {post.author?.display_name || "User"}
-                      </Link>
-                      {post.type === 'thread' && <span className="px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-bold bg-cyan-900/30 text-cyan-400 border border-cyan-800/50">Thread</span>}
-                      {post.type === 'reply' && <span className="px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-bold bg-zinc-800 text-zinc-400 border border-zinc-700">Reply</span>}
+                       <Link to={`/user/${post.author_id}`} className="hover:text-cyan-400 transition-colors">
+                         {post.author?.display_name || "User"}
+                       </Link>
+                       {post.type === 'thread' && <span className="px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-bold bg-cyan-900/30 text-cyan-400 border border-cyan-800/50">Thread</span>}
+                       {post.type === 'reply' && <span className="px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-bold bg-zinc-800 text-zinc-400 border border-zinc-700">Reply</span>}
                     </h4>
-                    <p className="text-xs text-zinc-500">{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</p>
+                    <UserBadges user={post.author} />
+                    <p className="text-xs text-zinc-500 mt-0.5">{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {(post.type === 'thread' || post.type === 'reply') && (
-                    <Link to={`/thread/${post.type === 'reply' ? post.thread_id : post.id}`} className="text-xs text-cyan-500 hover:text-cyan-400 p-2 rounded bg-cyan-500/10 uppercase tracking-widest font-bold">
-                      View in Thread
-                    </Link>
-                  )}
                   {isAdmin && (
                     <button 
                       onClick={() => handleDeletePost(post.id)}
@@ -461,16 +458,22 @@ export default function Community() {
                 </div>
               )}
 
-              <div className="flex items-center gap-6 mt-4 pt-4 border-t border-zinc-800/50">
-                <button onClick={() => toggleLike(post.id)} className={`flex items-center gap-2 transition-colors text-sm font-medium group ${post.has_liked ? 'text-red-500' : 'text-zinc-400 hover:text-red-400'}`}>
-                  <div className="p-1.5 rounded-full group-hover:bg-red-500/10"><Heart className={`w-4 h-4 ${post.has_liked ? 'fill-current' : ''}`} /></div> {post.likes_count}
-                </button>
-                <Link to={`/thread/${post.type === 'reply' ? post.thread_id : post.id}`} className="flex items-center gap-2 text-zinc-400 hover:text-cyan-400 transition-colors text-sm font-medium group">
-                  <div className="p-1.5 rounded-full group-hover:bg-cyan-500/10"><MessageSquare className="w-4 h-4" /></div> {post.replies_count}
+              <div className="flex items-center justify-between mt-4 pt-4 border-t border-zinc-800/50">
+                <div className="flex items-center gap-6">
+                  <button onClick={() => toggleLike(post.id)} className={`flex items-center gap-2 transition-colors text-sm font-medium group ${post.has_liked ? 'text-red-500' : 'text-zinc-400 hover:text-red-400'}`}>
+                    <div className="p-1.5 rounded-full group-hover:bg-red-500/10"><Heart className={`w-4 h-4 ${post.has_liked ? 'fill-current' : ''}`} /></div> {post.likes_count}
+                  </button>
+                  <Link to={`/thread/${post.type === 'reply' ? post.thread_id : post.id}`} className="flex items-center gap-2 text-zinc-400 hover:text-cyan-400 transition-colors text-sm font-medium group">
+                    <div className="p-1.5 rounded-full group-hover:bg-cyan-500/10"><MessageSquare className="w-4 h-4" /></div> {post.replies_count}
+                  </Link>
+                  <button onClick={() => handleShare(post.id)} className="flex items-center gap-2 text-zinc-400 hover:text-emerald-400 transition-colors text-sm font-medium group">
+                    <div className="p-1.5 rounded-full group-hover:bg-emerald-500/10"><Share2 className="w-4 h-4" /></div> {post.shares_count || 0}
+                  </button>
+                </div>
+                
+                <Link to={`/thread/${post.type === 'reply' ? post.thread_id : post.id}`} className="inline-flex text-xs text-cyan-500 hover:text-cyan-400 px-3 py-1.5 rounded-full bg-cyan-500/10 hover:bg-cyan-500/20 uppercase tracking-wider font-bold transition-colors">
+                  View full post
                 </Link>
-                <button onClick={() => handleShare(post.id)} className="flex items-center gap-2 text-zinc-400 hover:text-emerald-400 transition-colors text-sm font-medium group">
-                  <div className="p-1.5 rounded-full group-hover:bg-emerald-500/10"><Share2 className="w-4 h-4" /></div> {post.shares_count || 0}
-                </button>
               </div>
             </div>
             

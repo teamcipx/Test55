@@ -11,6 +11,7 @@ create table if not exists public.profiles (
   telegram_or_fb text,
   country text,
   interest text,
+  relationship_status text,
   age int,
   is_admin boolean default false,
   is_approved boolean default false,
@@ -23,6 +24,7 @@ create table if not exists public.profiles (
 -- Ensure admin and approved columns exist (just in case the table already existed)
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_admin boolean DEFAULT false;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_approved boolean DEFAULT false;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS relationship_status text;
 
 -- 2. Messages Table for Support 
 create table if not exists public.messages (

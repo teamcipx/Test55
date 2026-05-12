@@ -26,6 +26,7 @@ import AdminLayout from './pages/admin/AdminLayout';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminSupport from './pages/admin/AdminSupport';
 import AdminSettings from './pages/admin/AdminSettings';
+import AdminVideos from './pages/admin/AdminVideos';
 
 import './index.css';
 
@@ -59,6 +60,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="users" element={<AdminUsers />} />
           <Route path="support" element={<AdminSupport />} />
           <Route path="settings" element={<AdminSettings />} />
+          <Route path="videos" element={<AdminVideos />} />
         </Route>
       </Routes>
     </BrowserRouter>
