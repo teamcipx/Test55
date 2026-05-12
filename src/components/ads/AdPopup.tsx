@@ -44,7 +44,7 @@ export default function AdPopup() {
         <div className="p-5">
           <h3 className="text-xl font-bold text-white mb-2">Upgrade to VIP Mazhabi</h3>
           <p className="text-zinc-400 text-sm mb-4">
-            Unlock exclusive 18+ Mazhabi content, remove all ads, and get a verified badge on your profile today.
+            Unlock exclusive Mazhabi content, remove all ads, and get a verified badge on your profile today.
           </p>
           
           <Link 

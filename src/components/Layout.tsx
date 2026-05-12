@@ -278,9 +278,9 @@ export default function Layout() {
             <Link to="/premium-content" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 text-sm font-medium text-amber-500 hover:text-amber-400">
               <Crown className="w-4 h-4" /> Premium Videos
             </Link>
-            <Link to="/galleries" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-cyan-400">
-              <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-500 text-[9px] font-bold uppercase tracking-wider">18+</span>
-              Galleries
+            <Link to="/gallery" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-cyan-400">
+              <span className="px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-500 text-[9px] font-bold uppercase tracking-wider">NEW</span>
+              Gallery
             </Link>
             
             <div className="pt-4 border-t border-zinc-800 flex flex-col gap-3">

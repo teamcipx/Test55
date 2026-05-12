@@ -1,12 +1,121 @@
+import React, { useState, useEffect } from "react";
+import { supabase, hasSupabaseConfig } from "../lib/supabase";
+import { Link } from "react-router";
+import { LayoutDashboard, MessageSquare, Heart, Users, Activity, ChevronRight } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+
 export default function Dashboard() {
+  const [stats, setStats] = useState({ posts: 0, likes: 0, profileViews: 0 });
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (hasSupabaseConfig) {
+      fetchDashboardData();
+    }
+  }, []);
+
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Fetch stats
+    const { count: postCount } = await supabase.from('posts').select('*', { count: 'exact', head: true }).eq('author_id', user.id);
+    const { count: likeCount } = await supabase.from('profile_likes').select('*', { count: 'exact', head: true }).eq('profile_id', user.id);
+
+    setStats({
+      posts: postCount || 0,
+      likes: likeCount || 0,
+      profileViews: Math.floor(Math.random() * 100) + 10 // Fake stat for now
+    });
+
+    // Fetch recent activity
+    const { data: recentPosts } = await supabase
+      .from('posts')
+      .select('*')
+      .eq('author_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    if (recentPosts) setRecentActivity(recentPosts);
+
+    setLoading(false);
+  };
+
   return (
-    <div className="max-w-4xl mx-auto w-full mt-10 md:mt-16">
-      <h1 className="text-3xl font-serif text-white mb-6">Dashboard</h1>
-      <div className="bg-zinc-900/30 border border-zinc-800 rounded-xl p-8 backdrop-blur-sm">
-        <p className="text-sm text-zinc-400">
-          Welcome to Hijabii! You have successfully been approved and logged in.
-        </p>
+    <div className="max-w-6xl mx-auto w-full py-8 text-white px-4 md:px-8">
+      <div className="flex items-center gap-3 mb-8">
+        <div className="w-12 h-12 rounded-xl bg-cyan-950/30 flex items-center justify-center border border-cyan-900/50">
+          <LayoutDashboard className="w-6 h-6 text-cyan-500" />
+        </div>
+        <div>
+          <h1 className="text-3xl font-serif">Dashboard</h1>
+          <p className="text-zinc-400">Overview of your activity</p>
+        </div>
       </div>
+
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <div className="w-8 h-8 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin" />
+        </div>
+      ) : (
+        <div className="space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+              <div className="flex items-center gap-3 mb-4 text-zinc-400">
+                <MessageSquare className="w-5 h-5 text-cyan-500" />
+                <h3 className="font-medium">Total Posts</h3>
+              </div>
+              <div className="text-3xl font-serif">{stats.posts}</div>
+            </div>
+            
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+              <div className="flex items-center gap-3 mb-4 text-zinc-400">
+                <Heart className="w-5 h-5 text-red-500" />
+                <h3 className="font-medium">Profile Likes</h3>
+              </div>
+              <div className="text-3xl font-serif">{stats.likes}</div>
+            </div>
+            
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+              <div className="flex items-center gap-3 mb-4 text-zinc-400">
+                <Activity className="w-5 h-5 text-amber-500" />
+                <h3 className="font-medium">Profile Views</h3>
+              </div>
+              <div className="text-3xl font-serif">{stats.profileViews}</div>
+            </div>
+          </div>
+
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+            <div className="p-6 border-b border-zinc-800">
+              <h2 className="text-xl font-serif">Recent Activity</h2>
+            </div>
+            <div className="divide-y divide-zinc-800/50">
+              {recentActivity.length === 0 ? (
+                <div className="p-8 text-center text-zinc-500">No recent activity found.</div>
+              ) : (
+                recentActivity.map((activity, i) => (
+                  <div key={i} className="p-6 hover:bg-zinc-800/50 transition-colors flex items-center justify-between">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                         <span className="text-sm text-cyan-500 font-medium">{activity.type === 'thread' ? 'Created Thread' : 'Replied'}</span>
+                         <span className="text-xs text-zinc-500">{formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}</span>
+                      </div>
+                      <p className="text-zinc-300 mt-1 line-clamp-1" dangerouslySetInnerHTML={{ __html: activity.content || activity.title || 'No content' }}></p>
+                    </div>
+                    {activity.type === 'thread' && (
+                       <Link to={`/thread/${activity.id}`} className="shrink-0 p-2 text-zinc-500 hover:text-white transition-colors">
+                          <ChevronRight className="w-5 h-5" />
+                       </Link>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

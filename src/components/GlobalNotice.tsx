@@ -14,8 +14,9 @@ export default function GlobalNotice() {
       const subscription = supabase
         .channel('public:settings')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'settings', filter: "id=eq.global_notice" }, payload => {
-          if (payload.new && payload.new.value) {
-            setNotice(payload.new.value as any);
+          const newData = payload.new as any;
+          if (newData && newData.value) {
+            setNotice(newData.value as any);
             setVisible(true);
           }
         })
