@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { supabase, hasSupabaseConfig } from "../lib/supabase";
 import { formatDistanceToNow } from "date-fns";
 import { User, MessageSquare, Heart, Share2, Image as ImageIcon, Send, X, FileText, Trash2 } from "lucide-react";
@@ -49,18 +49,22 @@ export default function Community() {
 
   const [activeFeed, setActiveFeed] = useState<'forYou' | 'recent'>('forYou');
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     if (hasSupabaseConfig) {
       supabase.auth.getUser().then(async ({ data }) => {
-        setCurrentUser(data.user);
-        if (data.user) {
-          const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', data.user.id).single();
-          setIsAdmin(profile?.is_admin || false);
+        if (!data.user) {
+          navigate('/login');
+          return;
         }
+        setCurrentUser(data.user);
+        const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', data.user.id).single();
+        setIsAdmin(profile?.is_admin || false);
       });
       fetchPosts(activeFeed);
     }
-  }, [activeFeed]);
+  }, [activeFeed, navigate]);
 
   const fetchPosts = async (feedType: 'forYou' | 'recent' = 'forYou') => {
     setLoading(true);

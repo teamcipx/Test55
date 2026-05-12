@@ -46,15 +46,17 @@ export default function Thread() {
   useEffect(() => {
     if (hasSupabaseConfig && id) {
       supabase.auth.getUser().then(async ({ data }) => {
-        setCurrentUser(data.user);
-        if (data.user) {
-          const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', data.user.id).single();
-          setIsAdmin(profile?.is_admin || false);
+        if (!data.user) {
+          navigate('/login');
+          return;
         }
+        setCurrentUser(data.user);
+        const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', data.user.id).single();
+        setIsAdmin(profile?.is_admin || false);
       });
       fetchThread();
     }
-  }, [id]);
+  }, [id, navigate]);
 
   const handleDeletePost = async (postId: string, isMainThread: boolean) => {
     if (!isAdmin) return;

@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { supabase, hasSupabaseConfig } from "../lib/supabase";
 import { ImageIcon, User } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import AdBanner from "../components/ads/AdBanner";
 
 export default function Gallery() {
   const [images, setImages] = useState<any[]>([]);
@@ -38,6 +39,10 @@ export default function Gallery() {
           <h1 className="text-3xl font-serif text-white">Gallery</h1>
           <p className="text-zinc-400">All pictures shared by the community.</p>
         </div>
+      </div>
+      
+      <div className="mb-6">
+        <AdBanner />
       </div>
 
       {loading ? (
