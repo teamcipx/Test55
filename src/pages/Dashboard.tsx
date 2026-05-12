@@ -1,18 +1,32 @@
 import React, { useState, useEffect } from "react";
 import { supabase, hasSupabaseConfig } from "../lib/supabase";
 import { Link } from "react-router";
-import { LayoutDashboard, MessageSquare, Heart, Users, Activity, ChevronRight } from "lucide-react";
+import { LayoutDashboard, MessageSquare, Heart, Users, Activity, ChevronRight, Download } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 export default function Dashboard() {
   const [stats, setStats] = useState({ posts: 0, likes: 0, profileViews: 0 });
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
     if (hasSupabaseConfig) {
       fetchDashboardData();
     }
+
+    const handleBeforeInstallPrompt = (e: any) => {
+      // Prevent the mini-infobar from appearing on mobile
+      e.preventDefault();
+      // Stash the event so it can be triggered later.
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
   }, []);
 
   const fetchDashboardData = async () => {
@@ -43,6 +57,19 @@ export default function Dashboard() {
     setLoading(false);
   };
 
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) {
+      alert("App installation prompt is not available right now. You can install this app using your browser's 'Add to Home Screen' or 'Install' menu option.");
+      return;
+    }
+    // Show the install prompt
+    deferredPrompt.prompt();
+    // Wait for the user to respond to the prompt
+    await deferredPrompt.userChoice;
+    // We've used the prompt, and can't use it again, throw it away
+    setDeferredPrompt(null);
+  };
+
   return (
     <div className="max-w-6xl mx-auto w-full py-8 text-white px-4 md:px-8">
       <div className="flex items-center gap-3 mb-8">
@@ -53,14 +80,30 @@ export default function Dashboard() {
           <h1 className="text-3xl font-serif">Dashboard</h1>
           <p className="text-zinc-400">Overview of your activity</p>
         </div>
-        <Link to="/community" className="hidden md:flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 px-4 py-2 rounded-lg text-sm transition-colors">
+        <div className="hidden md:flex items-center gap-3">
+          <button 
+            onClick={handleInstallClick}
+            className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold border border-amber-400 px-4 py-2 rounded-lg text-sm transition-transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(245,158,11,0.3)]"
+          >
+            <Download className="w-4 h-4" /> Install App
+          </button>
+          <Link to="/community" className="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 px-4 py-2 rounded-lg text-sm transition-colors">
+            <Activity className="w-4 h-4" /> Go to Feed
+          </Link>
+        </div>
+      </div>
+
+      <div className="md:hidden flex flex-col gap-3 mb-6">
+        <button 
+          onClick={handleInstallClick}
+          className="flex items-center justify-center w-full gap-2 bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold border border-amber-400 px-4 py-3 rounded-lg text-sm transition-transform active:scale-95 shadow-[0_0_15px_rgba(245,158,11,0.3)]"
+        >
+          <Download className="w-4 h-4" /> Install App
+        </button>
+        <Link to="/community" className="flex items-center justify-center w-full gap-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 px-4 py-3 rounded-lg text-sm transition-colors">
           <Activity className="w-4 h-4" /> Go to Feed
         </Link>
       </div>
-
-      <Link to="/community" className="md:hidden flex items-center justify-center w-full gap-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 px-4 py-3 rounded-lg text-sm transition-colors mb-6">
-        <Activity className="w-4 h-4" /> Go to Feed
-      </Link>
 
       {loading ? (
         <div className="flex justify-center py-20">
