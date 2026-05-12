@@ -28,6 +28,12 @@ const signupSchema = z.object({
 
 type SignupFormValues = z.infer<typeof signupSchema>;
 
+const heroImages = [
+  "https://i.ibb.co.com/zWJzF3Bg/nothing-like-a-hijabis-ass-v0-7tk3wesr5s5b1.jpg",
+  "https://i.ibb.co.com/KPF5LsD/1778564278241.jpg",
+  "https://i.ibb.co.com/Rph5MT1m/images-14-11.jpg"
+];
+
 export default function Signup() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
@@ -36,6 +42,14 @@ export default function Signup() {
   const [uploading, setUploading] = useState(false);
   const [globalError, setGlobalError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const {
     register,
@@ -167,12 +181,19 @@ export default function Signup() {
   return (
     <div className="relative min-h-[calc(100vh-104px)] flex flex-col py-12 px-4 -mt-2">
       {/* Background Image */}
-      <div className="absolute inset-0 z-0 overflow-hidden">
-        <img 
-          src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80" 
-          alt="Fashion modeling" 
-          className="w-full h-full object-cover opacity-10"
-        />
+      <div className="absolute inset-0 z-0 overflow-hidden bg-black">
+        {heroImages.map((src, index) => (
+           <div
+             key={src}
+             className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentImageIndex ? 'opacity-100' : 'opacity-0'}`}
+           >
+             <img 
+               src={src} 
+               alt="Background" 
+               className={`w-full h-full object-cover opacity-20 mix-blend-luminosity transform scale-105 transition-transform duration-[10000ms] ease-linear ${index === currentImageIndex ? 'scale-100' : 'scale-105'}`}
+             />
+           </div>
+        ))}
         <div className="absolute inset-0 bg-gradient-to-b from-[#050505] via-[#050505]/95 to-[#050505]"></div>
       </div>
 

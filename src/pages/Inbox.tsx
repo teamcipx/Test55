@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { supabase, hasSupabaseConfig } from "../lib/supabase";
 import { Link, useSearchParams, useNavigate } from "react-router";
-import { Send, User, Search, ArrowLeft, Clock, Video, X, Loader2, Check, CheckCheck } from "lucide-react";
+import { Send, User, Search, ArrowLeft, Clock, Video, X, Loader2, Check, CheckCheck, Image as ImageIcon } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { uploadToImgBB } from "../lib/imgbb";
 
 export default function Inbox() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -15,10 +16,13 @@ export default function Inbox() {
   const [messages, setMessages] = useState<any[]>([]);
   const [activeChatUser, setActiveChatUser] = useState<any>(null);
   const [newMessage, setNewMessage] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [showVideoCall, setShowVideoCall] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (hasSupabaseConfig) {
@@ -153,15 +157,28 @@ export default function Inbox() {
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !currentUser || !activeUserId) return;
+    if ((!newMessage.trim() && !imageFile) || !currentUser || !activeUserId) return;
     
     setSending(true);
+    let uploadedImageUrl = null;
+
+    if (imageFile) {
+      try {
+        uploadedImageUrl = await uploadToImgBB(imageFile);
+      } catch (err: any) {
+        alert("Failed to upload image: " + err.message);
+        setSending(false);
+        return;
+      }
+    }
+
     const { data, error } = await supabase
       .from('direct_messages')
       .insert({
         sender_id: currentUser.id,
         receiver_id: activeUserId,
-        content: newMessage.trim()
+        content: newMessage.trim(),
+        image_url: uploadedImageUrl
       })
       .select()
       .single();
@@ -172,6 +189,8 @@ export default function Inbox() {
     } else if (data) {
       setMessages([...messages, data]);
       setNewMessage("");
+      setImageFile(null);
+      setImagePreview(null);
       // Refresh conversations snippet
       fetchConversations(currentUser.id);
     }
@@ -312,7 +331,10 @@ export default function Inbox() {
                   return (
                     <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                       <div className={`max-w-[75%] rounded-2xl px-4 py-2 ${isMe ? 'bg-cyan-600 text-white rounded-br-sm' : 'bg-zinc-800 text-zinc-200 rounded-bl-sm'}`}>
-                        <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                        {msg.image_url && (
+                           <img src={msg.image_url} alt="Attachment" className="max-w-full rounded-lg mb-2 object-cover max-h-60" />
+                        )}
+                        {msg.content && <p className="text-sm whitespace-pre-wrap">{msg.content}</p>}
                         <div className={`flex items-center gap-1 text-[9px] mt-1 ${isMe ? 'text-cyan-200' : 'text-zinc-500'}`}>
                           <span>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                           {isMe && (
@@ -329,7 +351,26 @@ export default function Inbox() {
 
             {/* Input Area */}
             <div className="p-4 border-t border-zinc-800 bg-zinc-950/50">
+               {imagePreview && (
+                  <div className="relative w-max mb-3">
+                     <img src={imagePreview} className="h-20 rounded-lg border border-zinc-700" alt="Preview"/>
+                     <button type="button" onClick={() => {setImageFile(null); setImagePreview(null)}} className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full"><X className="w-3 h-3"/></button>
+                  </div>
+               )}
               <form onSubmit={sendMessage} className="flex gap-3">
+                <button
+                   type="button"
+                   onClick={() => fileInputRef.current?.click()}
+                   className="w-10 h-10 shrink-0 text-cyan-500 hover:bg-cyan-500/10 rounded-full flex items-center justify-center transition-colors"
+                >
+                   <ImageIcon className="w-5 h-5" />
+                   <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={(e) => {
+                      if(e.target.files && e.target.files[0]) {
+                        setImageFile(e.target.files[0]);
+                        setImagePreview(URL.createObjectURL(e.target.files[0]));
+                      }
+                   }} />
+                </button>
                 <input
                   type="text"
                   value={newMessage}
@@ -339,7 +380,7 @@ export default function Inbox() {
                 />
                 <button 
                   type="submit"
-                  disabled={sending || !newMessage.trim()}
+                  disabled={sending || (!newMessage.trim() && !imageFile)}
                   className="w-10 h-10 shrink-0 bg-cyan-600 hover:bg-cyan-500 text-white rounded-full flex items-center justify-center disabled:opacity-50 transition-colors"
                 >
                   <Send className="w-4 h-4 ml-0.5" />

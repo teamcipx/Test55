@@ -121,10 +121,15 @@ create table if not exists public.direct_messages (
   id uuid default gen_random_uuid() primary key,
   sender_id uuid references public.profiles(id) not null,
   receiver_id uuid references public.profiles(id) not null,
-  content text not null,
+  content text,
+  image_url text,
   is_read boolean default false,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
+
+ALTER TABLE public.direct_messages ADD COLUMN IF NOT EXISTS image_url text;
+ALTER TABLE public.direct_messages ADD COLUMN IF NOT EXISTS content text;
+
 
 -- 9. Notifications Table
 create table if not exists public.notifications (

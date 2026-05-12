@@ -1,18 +1,41 @@
+import { useState, useEffect } from "react";
 import { ArrowRight, Users, Shield, Zap, Lock, Flame } from "lucide-react";
 import { Link } from "react-router";
 
+const heroImages = [
+  "https://i.ibb.co.com/zWJzF3Bg/nothing-like-a-hijabis-ass-v0-7tk3wesr5s5b1.jpg",
+  "https://i.ibb.co.com/KPF5LsD/1778564278241.jpg",
+  "https://i.ibb.co.com/Rph5MT1m/images-14-11.jpg"
+];
+
 export default function Home() {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
+    }, 5000); // Change image every 5 seconds
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="flex flex-col h-full bg-[#050505] min-h-[calc(100vh-104px)]">
       {/* Hero Section */}
       <section className="flex-1 flex flex-col justify-center px-4 md:px-10 py-16 md:py-24 relative overflow-hidden md:border-b border-zinc-900">
         {/* Background Image / Effects */}
-        <div className="absolute inset-0 z-0">
-          <img 
-            src="https://images.unsplash.com/photo-1616091216791-a0680a6d1ddc?auto=format&fit=crop&q=80" 
-            alt="Hero Background" 
-            className="w-full h-full object-cover opacity-20 mix-blend-luminosity"
-          />
+        <div className="absolute inset-0 z-0 bg-black">
+          {heroImages.map((src, index) => (
+             <div
+               key={src}
+               className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentImageIndex ? 'opacity-100' : 'opacity-0'}`}
+             >
+               <img 
+                 src={src} 
+                 alt="Hero Background" 
+                 className={`w-full h-full object-cover opacity-40 mix-blend-luminosity transform scale-105 transition-transform duration-[10000ms] ease-linear ${index === currentImageIndex ? 'scale-100' : 'scale-105'}`}
+               />
+             </div>
+          ))}
           <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/40 via-[#050505]/80 to-[#050505]"></div>
           <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[600px] h-[600px] bg-red-900/20 blur-[120px] rounded-full pointer-events-none" />
         </div>
