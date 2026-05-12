@@ -86,11 +86,8 @@ export default function Profile() {
       const { error } = await supabase!.from('profiles').update({
         display_name: displayName,
         real_name: realName,
-        telegram_or_fb: socialLink,
-        country,
         interest,
         age: parseInt(age) || null,
-        phone,
         avatar_url: avatarUrl
       }).eq('id', user.id);
 
@@ -263,34 +260,34 @@ export default function Profile() {
               </div>
 
               <div className="grid sm:grid-cols-2 gap-5">
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase tracking-wider text-zinc-500">Telegram/FB Link</label>
+                <div className="space-y-1 opacity-60">
+                  <label className="text-[10px] uppercase tracking-wider text-zinc-500">Telegram/FB Link (Cannot be changed)</label>
                   <input 
                     type="text" 
                     value={socialLink}
-                    onChange={e => setSocialLink(e.target.value)}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none" 
+                    disabled
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-zinc-500 cursor-not-allowed outline-none" 
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase tracking-wider text-zinc-500">Phone</label>
+                <div className="space-y-1 opacity-60">
+                  <label className="text-[10px] uppercase tracking-wider text-zinc-500">Phone (Cannot be changed)</label>
                   <input 
                     type="text" 
                     value={phone}
-                    onChange={e => setPhone(e.target.value)}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none" 
+                    disabled
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-zinc-500 cursor-not-allowed outline-none" 
                   />
                 </div>
               </div>
 
               <div className="grid sm:grid-cols-3 gap-5">
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase tracking-wider text-zinc-500">Country</label>
+                <div className="space-y-1 opacity-60">
+                  <label className="text-[10px] uppercase tracking-wider text-zinc-500">Country (Cannot be changed)</label>
                   <input 
                     type="text" 
                     value={country}
-                    onChange={e => setCountry(e.target.value)}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none" 
+                    disabled
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-zinc-500 cursor-not-allowed outline-none" 
                   />
                 </div>
                 <div className="space-y-1">

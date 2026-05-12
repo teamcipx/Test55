@@ -50,6 +50,11 @@ export default function Layout() {
         updateLastSeen(userSession.user.id);
       }, 60000); // 1 minute
       
+      const handleForceUpdate = () => {
+        fetchUnreadCounts(userSession.user.id);
+      };
+      window.addEventListener('force-update-counts', handleForceUpdate);
+      
       globalChannel = supabase
         .channel('global-counts')
         .on(
@@ -67,12 +72,17 @@ export default function Layout() {
           }
         )
         .subscribe();
+        
+      return () => {
+        subscription.unsubscribe();
+        if (pingInterval) clearInterval(pingInterval);
+        if (globalChannel) supabase.removeChannel(globalChannel);
+        window.removeEventListener('force-update-counts', handleForceUpdate);
+      };
     }
 
     return () => {
       subscription.unsubscribe();
-      if (pingInterval) clearInterval(pingInterval);
-      if (globalChannel) supabase.removeChannel(globalChannel);
     };
   }, [userSession?.user?.id]);
 

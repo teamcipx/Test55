@@ -146,6 +146,9 @@ export default function Inbox() {
       }
       return c;
     }));
+    
+    // Force layout badge update
+    window.dispatchEvent(new Event('force-update-counts'));
   };
 
   const sendMessage = async (e: React.FormEvent) => {

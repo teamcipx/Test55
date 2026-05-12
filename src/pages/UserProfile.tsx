@@ -1,21 +1,69 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router";
 import { supabase, hasSupabaseConfig } from "../lib/supabase";
-import { User, ShieldAlert, BadgeCheck, MessageSquare, Heart, Clock, ArrowLeft } from "lucide-react";
+import { User, ShieldAlert, BadgeCheck, MessageSquare, Heart, Clock, ArrowLeft, Send } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 export default function UserProfile() {
   const { id } = useParams();
   const [profile, setProfile] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [posts, setPosts] = useState<any[]>([]);
+  const [comments, setComments] = useState<any[]>([]);
+  const [profileLikes, setProfileLikes] = useState(0);
+  const [hasLiked, setHasLiked] = useState(false);
+  const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'activity' | 'comments'>('activity');
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setCurrentUser(data.user));
+  }, []);
 
   useEffect(() => {
     if (hasSupabaseConfig && id) {
       fetchUserProfile();
+      fetchProfileComments();
+      fetchProfileLikes();
     }
-  }, [id]);
+  }, [id, currentUser]);
+
+  const fetchProfileLikes = async () => {
+    if (!id) return;
+    const { count } = await supabase
+      .from('profile_likes')
+      .select('*', { count: 'exact', head: true })
+      .eq('profile_id', id);
+    
+    setProfileLikes(count || 0);
+
+    if (currentUser) {
+      const { data } = await supabase
+        .from('profile_likes')
+        .select('*')
+        .eq('profile_id', id)
+        .eq('user_id', currentUser.id)
+        .single();
+      
+      setHasLiked(!!data);
+    }
+  };
+
+  const handleToggleLike = async () => {
+    if (!currentUser) return;
+    
+    if (hasLiked) {
+      setProfileLikes(prev => prev - 1);
+      setHasLiked(false);
+      await supabase.from('profile_likes').delete().eq('profile_id', id).eq('user_id', currentUser.id);
+    } else {
+      setProfileLikes(prev => prev + 1);
+      setHasLiked(true);
+      await supabase.from('profile_likes').insert({ profile_id: id, user_id: currentUser.id });
+    }
+  };
 
   const fetchUserProfile = async () => {
     setLoading(true);
@@ -47,6 +95,33 @@ export default function UserProfile() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchProfileComments = async () => {
+    const { data } = await supabase
+      .from('profile_comments')
+      .select('*, author:author_id(*)')
+      .eq('profile_id', id)
+      .order('created_at', { ascending: false });
+    if (data) setComments(data);
+  };
+
+  const handlePostComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUser || !newComment.trim()) return;
+    
+    setSubmitting(true);
+    const { data, error } = await supabase.from('profile_comments').insert({
+      profile_id: id,
+      author_id: currentUser.id,
+      content: newComment.trim()
+    }).select('*, author:author_id(*)').single();
+    
+    if (!error && data) {
+      setComments([data, ...comments]);
+      setNewComment('');
+    }
+    setSubmitting(false);
   };
 
   const renderContent = (post: any) => {
@@ -155,13 +230,22 @@ export default function UserProfile() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex justify-center md:justify-start gap-3 mb-6">
+            <div className="flex flex-wrap justify-center md:justify-start gap-3 mb-6">
               <Link 
                 to={`/inbox?u=${profile.id}`}
                 className="flex items-center gap-2 bg-white text-zinc-900 hover:bg-zinc-200 px-5 py-2 rounded-full text-sm font-bold transition-colors"
               >
                 <MessageSquare className="w-4 h-4" /> Message
               </Link>
+              
+              <button 
+                onClick={handleToggleLike}
+                disabled={!currentUser}
+                className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-bold transition-colors border ${hasLiked ? 'bg-red-500/10 text-red-500 border-red-500/30 hover:bg-red-500/20' : 'bg-transparent text-white border-zinc-700 hover:border-zinc-500 disabled:opacity-50'}`}
+              >
+                <Heart className={`w-4 h-4 ${hasLiked ? 'fill-red-500' : ''}`} /> 
+                {profileLikes} {profileLikes === 1 ? 'Like' : 'Likes'}
+              </button>
             </div>
             
             {profile.interest && (
@@ -174,56 +258,135 @@ export default function UserProfile() {
         </div>
       </div>
 
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-serif text-white flex items-center gap-2">
-          Activity <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-xs text-zinc-400">{posts.length}</span>
-        </h2>
+      <div className="flex gap-4 border-b border-zinc-800 mb-6">
+        <button
+          onClick={() => setActiveTab('activity')}
+          className={`pb-3 text-sm font-medium transition-colors relative ${activeTab === 'activity' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+        >
+          Activity <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 text-xs text-zinc-400">{posts.length}</span>
+          {activeTab === 'activity' && (
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-cyan-500 rounded-t-full" />
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab('comments')}
+          className={`pb-3 text-sm font-medium transition-colors relative ${activeTab === 'comments' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+        >
+          Comments <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 text-xs text-zinc-400">{comments.length}</span>
+          {activeTab === 'comments' && (
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-cyan-500 rounded-t-full" />
+          )}
+        </button>
       </div>
 
-      {/* User Posts */}
-      <div className="space-y-6">
-        {posts.length === 0 ? (
-          <div className="text-center p-12 border border-zinc-800/50 rounded-xl bg-zinc-900/20 text-zinc-500">
-            <MessageSquare className="w-10 h-10 mx-auto mb-3 opacity-20" />
-            <p>No recent activity.</p>
-          </div>
-        ) : (
-          posts.map(post => (
-            <div key={post.id} className="bg-zinc-900/30 border border-zinc-800 rounded-xl p-5 hover:border-cyan-900/50 transition-colors">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2 text-zinc-400 text-xs font-medium">
-                  <Clock className="w-3.5 h-3.5" />
-                  {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-                  {post.type === 'thread' && (
-                    <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold bg-cyan-900/30 text-cyan-400 border border-cyan-800/50">Thread</span>
-                  )}
-                  {post.type === 'post' && (
-                    <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold bg-zinc-800 text-zinc-400">Post</span>
-                  )}
-                </div>
-                {post.type === 'thread' && (
-                  <Link to={`/thread/${post.id}`} className="text-xs text-cyan-500 hover:text-cyan-400 px-2 py-1 rounded bg-cyan-500/10 uppercase tracking-widest font-bold transition-colors">
-                    View Thread
-                  </Link>
-                )}
-              </div>
-              
-              {renderContent(post)}
-              
-              {post.image_url && (
-                <div className="mt-4 rounded-xl overflow-hidden border border-zinc-800 w-max max-w-full">
-                  <img src={post.image_url} alt="Post media" className="max-h-[300px] object-cover" />
-                </div>
-              )}
-              
-              <div className="flex items-center gap-6 mt-4 pt-4 border-t border-zinc-800/50 text-zinc-500 text-sm">
-                <span className="flex items-center gap-1.5"><Heart className="w-4 h-4" /> {post.likes_count}</span>
-                <span className="flex items-center gap-1.5"><MessageSquare className="w-4 h-4" /> {post.replies_count}</span>
-              </div>
+      {activeTab === 'activity' && (
+        <div className="space-y-6">
+          {posts.length === 0 ? (
+            <div className="text-center p-12 border border-zinc-800/50 rounded-xl bg-zinc-900/20 text-zinc-500">
+              <MessageSquare className="w-10 h-10 mx-auto mb-3 opacity-20" />
+              <p>No recent activity.</p>
             </div>
-          ))
-        )}
-      </div>
+          ) : (
+            posts.map(post => (
+              <div key={post.id} className="bg-zinc-900/30 border border-zinc-800 rounded-xl p-5 hover:border-cyan-900/50 transition-colors">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2 text-zinc-400 text-xs font-medium">
+                    <Clock className="w-3.5 h-3.5" />
+                    {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                    {post.type === 'thread' && (
+                      <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold bg-cyan-900/30 text-cyan-400 border border-cyan-800/50">Thread</span>
+                    )}
+                    {post.type === 'post' && (
+                      <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold bg-zinc-800 text-zinc-400">Post</span>
+                    )}
+                  </div>
+                  {post.type === 'thread' && (
+                    <Link to={`/thread/${post.id}`} className="text-xs text-cyan-500 hover:text-cyan-400 px-2 py-1 rounded bg-cyan-500/10 uppercase tracking-widest font-bold transition-colors">
+                      View Thread
+                    </Link>
+                  )}
+                </div>
+                
+                {renderContent(post)}
+                
+                {post.image_url && (
+                  <div className="mt-4 rounded-xl overflow-hidden border border-zinc-800 w-max max-w-full">
+                    <img src={post.image_url} alt="Post media" className="max-h-[300px] object-cover" />
+                  </div>
+                )}
+                
+                <div className="flex items-center gap-6 mt-4 pt-4 border-t border-zinc-800/50 text-zinc-500 text-sm">
+                  <span className="flex items-center gap-1.5"><Heart className="w-4 h-4" /> {post.likes_count}</span>
+                  <span className="flex items-center gap-1.5"><MessageSquare className="w-4 h-4" /> {post.replies_count}</span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {activeTab === 'comments' && (
+        <div className="space-y-6">
+          {currentUser ? (
+            <form onSubmit={handlePostComment} className="bg-zinc-900/30 border border-zinc-800 rounded-xl p-4 flex gap-4">
+              <div className="w-10 h-10 rounded-full shrink-0 overflow-hidden bg-zinc-800 border border-zinc-700">
+                 <User className="w-full h-full p-2 text-zinc-500" />
+              </div>
+              <div className="flex-1">
+                <textarea
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Leave a comment..."
+                  className="w-full bg-zinc-950/50 border border-zinc-800 rounded-lg p-3 text-sm text-white focus:border-cyan-500 focus:outline-none min-h-[80px] resize-none"
+                />
+                <div className="flex justify-end mt-2">
+                  <button
+                    type="submit"
+                    disabled={!newComment.trim() || submitting}
+                    className="bg-cyan-500 hover:bg-cyan-400 text-black px-4 py-1.5 rounded-full text-sm font-bold flex items-center gap-2 disabled:opacity-50 transition-colors"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    {submitting ? 'Posting...' : 'Post Comment'}
+                  </button>
+                </div>
+              </div>
+            </form>
+          ) : (
+            <div className="bg-zinc-900/30 border border-zinc-800 rounded-xl p-4 text-center text-sm text-zinc-400">
+               Please <Link to="/login" className="text-cyan-500 hover:underline">log in</Link> to leave a comment.
+            </div>
+          )}
+
+          <div className="space-y-4">
+            {comments.length === 0 ? (
+               <p className="text-center text-zinc-500 py-8">No comments yet. Be the first to say hi!</p>
+            ) : (
+              comments.map(comment => (
+                <div key={comment.id} className="bg-zinc-900/50 p-4 rounded-xl border border-zinc-800 hover:border-zinc-700 transition-colors">
+                  <div className="flex items-start gap-4">
+                     <Link to={`/user/${comment.author_id}`} className="shrink-0 w-10 h-10 rounded-full overflow-hidden bg-zinc-800 border border-zinc-700">
+                        {comment.author?.avatar_url ? (
+                          <img src={comment.author.avatar_url} className="w-full h-full object-cover" />
+                        ) : (
+                          <User className="w-full h-full p-2 text-zinc-500" />
+                        )}
+                     </Link>
+                     <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Link to={`/user/${comment.author_id}`} className="font-medium text-white hover:text-cyan-400 text-sm">
+                             {comment.author?.display_name || comment.author?.username || 'User'}
+                          </Link>
+                          <span className="text-zinc-600 text-xs">• {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}</span>
+                        </div>
+                        <p className="text-zinc-300 text-sm whitespace-pre-wrap">{comment.content}</p>
+                     </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

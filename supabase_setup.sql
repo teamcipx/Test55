@@ -153,6 +153,32 @@ create table if not exists public.premium_requests (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+-- 11. Profile Comments & Likes Tables
+create table if not exists public.profile_comments (
+  id uuid default gen_random_uuid() primary key,
+  profile_id uuid references public.profiles(id) not null,
+  author_id uuid references public.profiles(id) not null,
+  content text not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+create table if not exists public.profile_likes (
+  profile_id uuid references public.profiles(id) not null,
+  user_id uuid references public.profiles(id) not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  primary key (profile_id, user_id)
+);
+
+alter table public.profile_comments enable row level security;
+alter table public.profile_likes enable row level security;
+
+create policy "Anyone can read profile comments" on public.profile_comments for select using ( true );
+create policy "Authenticated users can insert profile comments" on public.profile_comments for insert with check ( auth.role() = 'authenticated' );
+create policy "Users can delete their own profile comments" on public.profile_comments for delete using ( auth.uid() = author_id );
+
+create policy "Anyone can read profile likes" on public.profile_likes for select using ( true );
+create policy "Authenticated users can manage profile likes" on public.profile_likes for all using ( auth.uid() = user_id );
+
 -- ============================================================================
 -- How to set an Admin user manually (run this in Supabase SQL Editor):
 -- UPDATE public.profiles SET is_admin = true, is_approved = true WHERE id = (SELECT id FROM auth.users WHERE email = 'your_email@example.com');

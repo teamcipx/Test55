@@ -104,6 +104,18 @@ export default function Signup() {
 
     setUploading(true);
     try {
+      // 0. Check uniqueness
+      const { data: existingTg } = await supabase!.from('profiles').select('id').eq('telegram_or_fb', data.socialLink).limit(1);
+      if (existingTg && existingTg.length > 0) throw new Error("This Telegram username is already in use.");
+      
+      if (data.phone) {
+        const { data: existingPhone } = await supabase!.from('profiles').select('id').eq('phone', data.phone).limit(1);
+        if (existingPhone && existingPhone.length > 0) throw new Error("This phone number is already in use.");
+      }
+
+      const { data: existingUsername } = await supabase!.from('profiles').select('id').eq('username', data.username).limit(1);
+      if (existingUsername && existingUsername.length > 0) throw new Error("This username is already taken.");
+
       // 1. Upload Image
       const avatarUrl = await uploadToImgBB(avatarFile);
       if (!avatarUrl) {

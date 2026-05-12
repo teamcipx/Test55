@@ -47,6 +47,8 @@ export default function Community() {
   const [publishing, setPublishing] = useState(false);
   const [expandedPosts, setExpandedPosts] = useState<Record<string, boolean>>({});
 
+  const [activeFeed, setActiveFeed] = useState<'forYou' | 'recent'>('forYou');
+
   useEffect(() => {
     if (hasSupabaseConfig) {
       supabase.auth.getUser().then(async ({ data }) => {
@@ -56,17 +58,21 @@ export default function Community() {
           setIsAdmin(profile?.is_admin || false);
         }
       });
-      fetchPosts();
+      fetchPosts(activeFeed);
     }
-  }, []);
+  }, [activeFeed]);
 
-  const fetchPosts = async () => {
+  const fetchPosts = async (feedType: 'forYou' | 'recent' = 'forYou') => {
     setLoading(true);
-    // Fetch all posts (normal, thread, reply) and order by created_at desc
-    const { data: postsData } = await supabase
-      .from('posts')
-      .select('*, author:author_id(*)')
-      .order('created_at', { ascending: false });
+    let query = supabase.from('posts').select('*, author:author_id(*)');
+    
+    if (feedType === 'forYou') {
+      query = query.order('likes_count', { ascending: false }).order('created_at', { ascending: false });
+    } else {
+      query = query.order('created_at', { ascending: false });
+    }
+
+    const { data: postsData } = await query;
       
     if (postsData) {
       const { data: { user } } = await supabase.auth.getUser();
@@ -368,6 +374,28 @@ export default function Community() {
           </div>
         </div>
       )}
+
+      {/* Feed Options */}
+      <div className="flex gap-4 border-b border-zinc-800 mb-6">
+        <button
+          onClick={() => setActiveFeed('forYou')}
+          className={`pb-3 text-sm font-medium transition-colors relative ${activeFeed === 'forYou' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+        >
+          For You
+          {activeFeed === 'forYou' && (
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-cyan-500 rounded-t-full" />
+          )}
+        </button>
+        <button
+          onClick={() => setActiveFeed('recent')}
+          className={`pb-3 text-sm font-medium transition-colors relative ${activeFeed === 'recent' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+        >
+          Recent
+          {activeFeed === 'recent' && (
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-cyan-500 rounded-t-full" />
+          )}
+        </button>
+      </div>
 
       {/* Feed */}
       <div className="space-y-6">
