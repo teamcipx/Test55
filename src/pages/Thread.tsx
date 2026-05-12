@@ -6,6 +6,7 @@ import { User, MessageSquare, Heart, Share2, Image as ImageIcon, Send, X, ArrowL
 import { uploadToImgBB } from "../lib/imgbb";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import AdBanner from "../components/ads/AdBanner";
 
 // Remove invalid links from text
 function formatPostContent(html: string) {
@@ -259,6 +260,16 @@ export default function Thread() {
           className="prose prose-invert prose-p:my-4 prose-a:text-cyan-400 max-w-none text-zinc-300 leading-relaxed text-base md:text-lg"
           dangerouslySetInnerHTML={{ __html: thread.content || '' }} 
         />
+        
+        {(() => {
+          const temp = document.createElement('div');
+          temp.innerHTML = thread.content || '';
+          const textLength = temp.textContent?.length || 0;
+          if (textLength > 1000) {
+            return <AdBanner />;
+          }
+          return null;
+        })()}
 
         {thread.image_url && (
           <div className="mt-6 rounded-xl overflow-hidden border border-zinc-800">

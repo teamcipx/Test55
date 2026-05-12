@@ -14,6 +14,8 @@ create table if not exists public.profiles (
   age int,
   is_admin boolean default false,
   is_approved boolean default false,
+  is_premium boolean default false,
+  is_verified boolean default false,
   last_seen timestamp with time zone default timezone('utc'::text, now()),
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
@@ -139,6 +141,17 @@ drop trigger if exists trigger_new_direct_message on public.direct_messages;
 create trigger trigger_new_direct_message
   after insert on public.direct_messages
   for each row execute function on_new_direct_message();
+
+-- 10. Premium Requests Table
+create table if not exists public.premium_requests (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references public.profiles(id) not null,
+  binance_pay_id text,
+  transaction_id text,
+  status text default 'pending', -- pending, approved, rejected
+  amount numeric,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
 
 -- ============================================================================
 -- How to set an Admin user manually (run this in Supabase SQL Editor):

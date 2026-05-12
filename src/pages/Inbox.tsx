@@ -1,20 +1,23 @@
 import React, { useState, useEffect, useRef } from "react";
 import { supabase, hasSupabaseConfig } from "../lib/supabase";
-import { Link, useSearchParams } from "react-router";
-import { Send, User, Search, ArrowLeft, Clock } from "lucide-react";
+import { Link, useSearchParams, useNavigate } from "react-router";
+import { Send, User, Search, ArrowLeft, Clock, Video, X, Loader2, Check, CheckCheck } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 export default function Inbox() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeUserId = searchParams.get('u');
+  const navigate = useNavigate();
   
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
   const [conversations, setConversations] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [activeChatUser, setActiveChatUser] = useState<any>(null);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [showVideoCall, setShowVideoCall] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -23,6 +26,9 @@ export default function Inbox() {
         setCurrentUser(data.user);
         if (data.user) {
           fetchConversations(data.user.id);
+          supabase.from('profiles').select('is_premium').eq('id', data.user.id).single().then(res => {
+            if (res.data) setCurrentUserProfile(res.data);
+          });
         }
       });
     }
@@ -37,6 +43,35 @@ export default function Inbox() {
       setActiveChatUser(null);
     }
   }, [activeUserId, currentUser]);
+
+  useEffect(() => {
+    if (!currentUser || !hasSupabaseConfig) return;
+    
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'direct_messages' },
+        (payload) => {
+          // fetch conversations to get updated latest message and unread counts
+          fetchConversations(currentUser.id);
+          
+          // if chat is open and a new message comes in or is updated
+          if (activeUserId) {
+            fetchChat(currentUser.id, activeUserId);
+            // If the incoming message is for the active chat and we are the receiver, mark as read
+            if (payload.eventType === 'INSERT' && payload.new.receiver_id === currentUser.id && payload.new.sender_id === activeUserId) {
+               markMessagesAsRead(currentUser.id, activeUserId);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser, activeUserId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -146,12 +181,23 @@ export default function Inbox() {
     return diff < 5 * 60 * 1000; // 5 minutes
   };
 
+  const handleVideoCall = () => {
+    if (!currentUserProfile?.is_premium) {
+      const wantPremium = window.confirm("Video call is a Premium feature. Would you like to upgrade to Premium?");
+      if (wantPremium) {
+        navigate('/premium');
+      }
+      return;
+    }
+    setShowVideoCall(true);
+  };
+
   if (!currentUser) {
     return <div className="text-center py-20 text-zinc-400">Please sign in to view your inbox.</div>;
   }
 
   return (
-    <div className="max-w-6xl mx-auto w-full py-8 px-4 h-[calc(100vh-100px)] flex gap-6">
+    <div className="max-w-6xl mx-auto w-full py-8 px-4 h-[calc(100vh-100px)] flex gap-6 relative">
       
       {/* Sidebar - Conversations list */}
       <div className={`w-full md:w-1/3 flex flex-col bg-zinc-900/40 border border-zinc-800 rounded-2xl overflow-hidden ${activeUserId ? 'hidden md:flex' : 'flex'}`}>
@@ -244,6 +290,11 @@ export default function Inbox() {
                   </Link>
                 )}
               </div>
+              <div className="flex items-center">
+                 <button onClick={handleVideoCall} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-cyan-400 transition-colors">
+                    <Video className="w-5 h-5" />
+                 </button>
+              </div>
             </div>
 
             {/* Messages Area */}
@@ -259,9 +310,12 @@ export default function Inbox() {
                     <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                       <div className={`max-w-[75%] rounded-2xl px-4 py-2 ${isMe ? 'bg-cyan-600 text-white rounded-br-sm' : 'bg-zinc-800 text-zinc-200 rounded-bl-sm'}`}>
                         <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                        <p className={`text-[9px] mt-1 ${isMe ? 'text-cyan-200' : 'text-zinc-500'}`}>
-                          {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </p>
+                        <div className={`flex items-center gap-1 text-[9px] mt-1 ${isMe ? 'text-cyan-200' : 'text-zinc-500'}`}>
+                          <span>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          {isMe && (
+                            msg.is_read ? <CheckCheck className="w-3 h-3 text-cyan-200" /> : <Check className="w-3 h-3 text-cyan-200/50" />
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
@@ -293,6 +347,30 @@ export default function Inbox() {
         )}
       </div>
 
+      {showVideoCall && (
+        <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-sm rounded-2xl overflow-hidden flex flex-col items-center justify-center">
+          <div className="relative w-full h-full max-w-2xl mx-auto flex flex-col items-center justify-center p-8">
+             <div className="w-32 h-32 rounded-full bg-zinc-800 overflow-hidden mb-8 border-4 border-zinc-700 animate-pulse relative">
+                <img 
+                  src={activeChatUser?.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=40"} 
+                  alt="avatar" 
+                  className="w-full h-full object-cover opacity-50"
+               />
+               <div className="absolute inset-0 flex items-center justify-center">
+                  <Loader2 className="w-8 h-8 text-white animate-spin" />
+               </div>
+             </div>
+             <h2 className="text-2xl font-serif text-white mb-2">Calling {activeChatUser?.display_name}...</h2>
+             <p className="text-zinc-400 mb-12">Waiting for answer</p>
+             
+             <div className="flex gap-6">
+                <button className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center text-white transition-colors" onClick={() => setShowVideoCall(false)}>
+                  <X className="w-8 h-8" />
+                </button>
+             </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { User, MessageSquare, Heart, Share2, Image as ImageIcon, Send, X, FileTe
 import { uploadToImgBB } from "../lib/imgbb";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import AdBanner from "../components/ads/AdBanner";
 
 // Remove invalid links from text
 function formatPostContent(html: string) {
@@ -378,8 +379,9 @@ export default function Community() {
             <p>No posts yet. Be the first to start a discussion!</p>
           </div>
         ) : (
-          posts.map(post => (
-            <div key={post.id} className="bg-zinc-900/30 border border-zinc-800 rounded-xl p-5 backdrop-blur-sm">
+          posts.map((post, ind) => (
+            <React.Fragment key={post.id}>
+              <div className="bg-zinc-900/30 border border-zinc-800 rounded-xl p-5 backdrop-blur-sm">
               <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center gap-3">
                   <Link to={`/user/${post.author_id}`} className="shrink-0 relative block">
@@ -441,6 +443,10 @@ export default function Community() {
                 </button>
               </div>
             </div>
+            
+            {/* Show AdBanner after every 2 posts */}
+            {(ind + 1) % 2 === 0 && <AdBanner />}
+            </React.Fragment>
           ))
         )}
       </div>

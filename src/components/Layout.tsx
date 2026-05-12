@@ -1,11 +1,12 @@
 import { Outlet, Link, useNavigate, useLocation } from "react-router";
-import { HelpCircle, LogIn, Menu, X, Globe, LogOut, User as UserIcon, ShieldAlert, LayoutDashboard, Bell, Mail } from "lucide-react";
+import { HelpCircle, LogIn, Menu, X, Globe, LogOut, User as UserIcon, ShieldAlert, LayoutDashboard, Bell, Mail, Crown, Search } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "../lib/utils";
 import SupportWidget from "./SupportWidget";
 import { supabase, hasSupabaseConfig } from "../lib/supabase";
 
 import GlobalNotice from "./GlobalNotice";
+import AdPopunder from "./ads/AdPopunder";
 
 export default function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -41,16 +42,37 @@ export default function Layout() {
     });
 
     let pingInterval: NodeJS.Timeout;
+    let globalChannel: any;
+    
     if (userSession?.user) {
       updateLastSeen(userSession.user.id);
       pingInterval = setInterval(() => {
         updateLastSeen(userSession.user.id);
       }, 60000); // 1 minute
+      
+      globalChannel = supabase
+        .channel('global-counts')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'direct_messages' },
+          () => {
+            fetchUnreadCounts(userSession.user.id);
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'notifications' },
+          () => {
+            fetchUnreadCounts(userSession.user.id);
+          }
+        )
+        .subscribe();
     }
 
     return () => {
       subscription.unsubscribe();
       if (pingInterval) clearInterval(pingInterval);
+      if (globalChannel) supabase.removeChannel(globalChannel);
     };
   }, [userSession?.user?.id]);
 
@@ -108,6 +130,9 @@ export default function Layout() {
             <div className="hidden md:flex items-center gap-6">
               <Link to="/features" className="text-sm font-medium text-zinc-400 hover:text-cyan-400 transition-colors">Features</Link>
               <Link to="/community" className="text-sm font-medium text-zinc-400 hover:text-cyan-400 transition-colors">Discussions</Link>
+              <Link to="/premium-content" className="text-sm font-medium text-amber-500 hover:text-amber-400 transition-colors flex items-center gap-1">
+                <Crown className="w-3.5 h-3.5" /> Videos
+              </Link>
               <Link to="/galleries" className="text-sm font-medium text-zinc-400 hover:text-cyan-400 transition-colors flex items-center gap-1">
                 <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-500 text-[9px] font-bold uppercase tracking-wider">18+</span>
                 Galleries
@@ -115,8 +140,30 @@ export default function Layout() {
               
               <div className="w-px h-4 bg-zinc-800 mx-2" />
 
+              <form 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const q = new FormData(e.currentTarget).get('q');
+                  if (q) navigate(`/search?q=${encodeURIComponent(q as string)}`);
+                }}
+                className="relative hidden lg:block"
+              >
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+                <input 
+                  type="text" 
+                  name="q"
+                  placeholder="Search..." 
+                  className="bg-zinc-900 border border-zinc-800 rounded-full pl-9 pr-4 py-1.5 text-sm text-white focus:outline-none focus:border-cyan-500 w-48 focus:w-64 transition-all"
+                />
+              </form>
+
               {userSession ? (
                 <>
+                  {!profile?.is_premium && (
+                    <Link to="/premium" className="px-3 py-1 bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-500/20 rounded-full text-amber-500 text-[10px] font-bold uppercase tracking-wider hover:bg-amber-500/20 transition-colors mr-2">
+                      Upgrade
+                    </Link>
+                  )}
                   <Link to="/inbox" className="relative p-2 text-zinc-400 hover:text-cyan-400 transition-colors group">
                     <Mail className="w-5 h-5 group-hover:scale-110 transition-transform" />
                     {unreadMessages > 0 && (
@@ -214,6 +261,9 @@ export default function Layout() {
           <div className="md:hidden border-t border-zinc-800 bg-zinc-950 px-4 py-4 space-y-4 shadow-xl">
             <Link to="/features" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-medium text-zinc-400 hover:text-cyan-400">Features</Link>
             <Link to="/community" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-medium text-zinc-400 hover:text-cyan-400">Discussions</Link>
+            <Link to="/premium-content" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 text-sm font-medium text-amber-500 hover:text-amber-400">
+              <Crown className="w-4 h-4" /> Premium Videos
+            </Link>
             <Link to="/galleries" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-cyan-400">
               <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-500 text-[9px] font-bold uppercase tracking-wider">18+</span>
               Galleries
@@ -222,6 +272,11 @@ export default function Layout() {
             <div className="pt-4 border-t border-zinc-800 flex flex-col gap-3">
               {userSession ? (
                 <>
+                  {!profile?.is_premium && (
+                    <Link to="/premium" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center gap-2 text-sm font-bold bg-amber-500 text-black hover:bg-amber-400 p-2 rounded transition-colors">
+                      <Crown className="w-4 h-4" /> Upgrade to Premium
+                    </Link>
+                  )}
                   <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-cyan-400 p-2 bg-zinc-900/50 rounded">
                     <LayoutDashboard className="w-4 h-4" /> Dashboard
                   </Link>
@@ -282,6 +337,9 @@ export default function Layout() {
 
       {/* Help Widget */}
       <SupportWidget />
+      
+      {/* Popunder Ad */}
+      <AdPopunder />
     </div>
   );
 }

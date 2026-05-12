@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Upload, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Upload, AlertCircle, CheckCircle2, ChevronRight, ChevronLeft } from "lucide-react";
 import { uploadToImgBB } from "../lib/imgbb";
 import { supabase, hasSupabaseConfig } from "../lib/supabase";
 import { cn } from "../lib/utils";
@@ -30,6 +30,7 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 
 export default function Signup() {
   const navigate = useNavigate();
+  const [step, setStep] = useState(1);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -39,9 +40,11 @@ export default function Signup() {
   const {
     register,
     handleSubmit,
+    trigger,
     formState: { errors, isSubmitting },
   } = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
+    mode: "onBlur"
   });
 
   React.useEffect(() => {
@@ -59,7 +62,31 @@ export default function Signup() {
       const file = e.target.files[0];
       setAvatarFile(file);
       setAvatarPreview(URL.createObjectURL(file));
+      setGlobalError(null);
     }
+  };
+
+  const nextStep = async () => {
+    let fieldsToValidate: any[] = [];
+    if (step === 1) fieldsToValidate = ["email", "password"];
+    if (step === 2) {
+      fieldsToValidate = ["username", "displayName", "realName"];
+      if (!avatarFile) {
+        setGlobalError("Please upload a profile picture.");
+        return;
+      }
+    }
+    
+    const isStepValid = await trigger(fieldsToValidate);
+    if (isStepValid) {
+      setGlobalError(null);
+      setStep(step + 1);
+    }
+  };
+
+  const prevStep = () => {
+    setStep(step - 1);
+    setGlobalError(null);
   };
 
   const onSubmit = async (data: SignupFormValues) => {
@@ -137,15 +164,24 @@ export default function Signup() {
         <div className="absolute inset-0 bg-gradient-to-b from-[#050505] via-[#050505]/95 to-[#050505]"></div>
       </div>
 
-      <div className="relative z-10 max-w-4xl mx-auto w-full">
+      <div className="relative z-10 max-w-lg mx-auto w-full">
         <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-xl p-6 md:p-10 backdrop-blur-xl shadow-2xl">
-          <div className="mb-8 max-w-sm">
+          <div className="mb-6">
             <h2 className="text-2xl font-serif text-white mb-2">Create Account</h2>
-            <p className="text-sm text-zinc-500">Fill your details for administrator review.</p>
+            <div className="flex gap-2 mb-4">
+               {[1, 2, 3].map(i => (
+                 <div key={i} className={`h-1.5 flex-1 rounded-full ${step >= i ? 'bg-cyan-500' : 'bg-zinc-800'}`} />
+               ))}
+            </div>
+            <p className="text-sm text-zinc-500">
+              {step === 1 && "Step 1: Account Credentials"}
+              {step === 2 && "Step 2: Profile Identify"}
+              {step === 3 && "Step 3: Personal Details"}
+            </p>
           </div>
 
           {globalError && (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-md mb-8 flex items-start gap-3 text-sm">
+          <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-md mb-6 flex items-start gap-3 text-sm">
             <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
             <span>{globalError}</span>
           </div>
@@ -153,145 +189,160 @@ export default function Signup() {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           
-          {/* Avatar Upload */}
-          <div className="flex flex-col items-start gap-4 mb-2">
-            <div 
-              className={cn(
-                "relative w-24 h-24 rounded border border-dashed flex flex-col items-center justify-center overflow-hidden cursor-pointer transition-colors group bg-zinc-950",
-                avatarPreview ? "border-cyan-500" : "border-zinc-700 hover:border-cyan-500"
-              )}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {avatarPreview ? (
-                <>
-                  <img src={avatarPreview} alt="Preview" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center">
-                    <Upload className="w-6 h-6 text-white" />
+          {step === 1 && (
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase tracking-wider text-zinc-500">Email Address *</label>
+                <input type="email" {...register("email")} className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none focus:ring-1 focus:ring-cyan-500" placeholder="john@example.com" />
+                {errors.email && <p className="text-red-400 text-xs">{errors.email.message}</p>}
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase tracking-wider text-zinc-500">Password *</label>
+                <input type="password" {...register("password")} className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none focus:ring-1 focus:ring-cyan-500" placeholder="••••••••" />
+                {errors.password && <p className="text-red-400 text-xs">{errors.password.message}</p>}
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+             <div className="space-y-4">
+               {/* Avatar Upload */}
+                <div className="flex flex-col items-center gap-4 mb-2">
+                  <div 
+                    className={cn(
+                      "relative w-28 h-28 rounded-full border-2 border-dashed flex flex-col items-center justify-center overflow-hidden cursor-pointer transition-colors group bg-zinc-950 box-border",
+                      avatarPreview ? "border-cyan-500" : "border-zinc-700 hover:border-cyan-500"
+                    )}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    {avatarPreview ? (
+                      <>
+                        <img src={avatarPreview} alt="Preview" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center">
+                          <Upload className="w-6 h-6 text-white" />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-8 h-8 text-neutral-500 mb-2 group-hover:text-neutral-300 transition-colors" />
+                        <span className="text-[10px] font-medium text-neutral-500 group-hover:text-neutral-300">Upload Photo</span>
+                      </>
+                    )}
                   </div>
-                </>
-              ) : (
-                <>
-                  <Upload className="w-8 h-8 text-neutral-500 mb-2 group-hover:text-neutral-300 transition-colors" />
-                  <span className="text-xs font-medium text-neutral-500 group-hover:text-neutral-300">Upload Photo</span>
-                </>
-              )}
-            </div>
-            <input 
-              type="file" 
-              accept="image/*" 
-              className="hidden" 
-              ref={fileInputRef} 
-              onChange={handleFileChange}
-            />
-            {(!avatarFile && isSubmitting) && (
-              <p className="text-red-400 text-xs">Profile picture is required</p>
-            )}
-          </div>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    ref={fileInputRef} 
+                    onChange={handleFileChange}
+                  />
+                  {(!avatarFile && isSubmitting) && (
+                    <p className="text-red-400 text-xs text-center">Profile picture is required</p>
+                  )}
+                </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-1">
-              <label className="text-[10px] uppercase tracking-wider text-zinc-500">Real Name *</label>
-              <input {...register("realName")} className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none focus:ring-1 focus:ring-cyan-500" placeholder="John Doe" />
-              {errors.realName && <p className="text-red-400 text-xs">{errors.realName.message}</p>}
-            </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase tracking-wider text-zinc-500">Username *</label>
+                  <input {...register("username")} className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none focus:ring-1 focus:ring-cyan-500" placeholder="john_doe" />
+                  {errors.username && <p className="text-red-400 text-xs">{errors.username.message}</p>}
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase tracking-wider text-zinc-500">Display Name *</label>
+                  <input {...register("displayName")} className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none focus:ring-1 focus:ring-cyan-500" placeholder="MasterNinja" />
+                  {errors.displayName && <p className="text-red-400 text-xs">{errors.displayName.message}</p>}
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase tracking-wider text-zinc-500">Real Name *</label>
+                  <input {...register("realName")} className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none focus:ring-1 focus:ring-cyan-500" placeholder="John Doe" />
+                  {errors.realName && <p className="text-red-400 text-xs">{errors.realName.message}</p>}
+                </div>
+             </div>
+          )}
 
-            <div className="space-y-1">
-              <label className="text-[10px] uppercase tracking-wider text-zinc-500">Display Name *</label>
-              <input {...register("displayName")} className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none focus:ring-1 focus:ring-cyan-500" placeholder="MasterNinja" />
-              {errors.displayName && <p className="text-red-400 text-xs">{errors.displayName.message}</p>}
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] uppercase tracking-wider text-zinc-500">Username *</label>
-              <input {...register("username")} className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none focus:ring-1 focus:ring-cyan-500" placeholder="john_doe" />
-              {errors.username && <p className="text-red-400 text-xs">{errors.username.message}</p>}
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] uppercase tracking-wider text-zinc-500">Email Address *</label>
-              <input type="email" {...register("email")} className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none focus:ring-1 focus:ring-cyan-500" placeholder="john@example.com" />
-              {errors.email && <p className="text-red-400 text-xs">{errors.email.message}</p>}
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] uppercase tracking-wider text-zinc-500">Phone Number (Optional)</label>
-              <input {...register("phone")} className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none focus:ring-1 focus:ring-cyan-500" placeholder="+1 234 567 8900" />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] uppercase tracking-wider text-zinc-500">Telegram or Facebook Profile *</label>
-              <input {...register("socialLink")} className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none focus:ring-1 focus:ring-cyan-500" placeholder="t.me/username" />
-              {errors.socialLink && <p className="text-red-400 text-xs">{errors.socialLink.message}</p>}
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] uppercase tracking-wider text-zinc-500">Country *</label>
-              <select {...register("country")} className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none focus:ring-1 focus:ring-cyan-500 appearance-none">
-                <option value="">Select a country</option>
-                <option value="US">United States</option>
-                <option value="UK">United Kingdom</option>
-                <option value="CA">Canada</option>
-                <option value="AU">Australia</option>
-                <option value="IN">India</option>
-                <option value="BD">Bangladesh</option>
-                <option value="Other">Other</option>
-              </select>
-              {errors.country && <p className="text-red-400 text-xs">{errors.country.message}</p>}
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] uppercase tracking-wider text-zinc-500">Primary Interest *</label>
-              <input {...register("interest")} className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none focus:ring-1 focus:ring-cyan-500" placeholder="e.g. Web Development, Gaming" />
-              {errors.interest && <p className="text-red-400 text-xs">{errors.interest.message}</p>}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 col-span-1 md:col-span-2">
-              <div className="space-y-1">
-                <label className="text-[10px] uppercase tracking-wider text-zinc-500">Age *</label>
-                <input type="number" {...register("age")} className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none focus:ring-1 focus:ring-cyan-500" placeholder="18" />
-                {errors.age && <p className="text-red-400 text-xs">{errors.age.message}</p>}
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] uppercase tracking-wider text-zinc-500">Gender *</label>
-                <select {...register("gender")} className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none focus:ring-1 focus:ring-cyan-500 appearance-none">
-                  <option value="">Select</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                  <option value="Prefer not to say">Prefer not to say</option>
-                </select>
-                {errors.gender && <p className="text-red-400 text-xs">{errors.gender.message}</p>}
+          {step === 3 && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                 <div className="space-y-1 col-span-2">
+                    <label className="text-[10px] uppercase tracking-wider text-zinc-500">Telegram or Facebook Profile *</label>
+                    <input {...register("socialLink")} className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none focus:ring-1 focus:ring-cyan-500" placeholder="t.me/username" />
+                    {errors.socialLink && <p className="text-red-400 text-xs">{errors.socialLink.message}</p>}
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase tracking-wider text-zinc-500">Phone Number (Optional)</label>
+                    <input {...register("phone")} className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none focus:ring-1 focus:ring-cyan-500" placeholder="+1 234 567 8900" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase tracking-wider text-zinc-500">Country *</label>
+                    <select {...register("country")} className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none focus:ring-1 focus:ring-cyan-500 appearance-none">
+                      <option value="">Select a country</option>
+                      <option value="US">United States</option>
+                      <option value="UK">United Kingdom</option>
+                      <option value="CA">Canada</option>
+                      <option value="AU">Australia</option>
+                      <option value="IN">India</option>
+                      <option value="BD">Bangladesh</option>
+                      <option value="Other">Other</option>
+                    </select>
+                    {errors.country && <p className="text-red-400 text-xs">{errors.country.message}</p>}
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase tracking-wider text-zinc-500">Age *</label>
+                    <input type="number" {...register("age")} className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none focus:ring-1 focus:ring-cyan-500" placeholder="18" />
+                    {errors.age && <p className="text-red-400 text-xs">{errors.age.message}</p>}
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase tracking-wider text-zinc-500">Gender *</label>
+                    <select {...register("gender")} className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none focus:ring-1 focus:ring-cyan-500 appearance-none">
+                      <option value="">Select</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                      <option value="Prefer not to say">Prefer not to say</option>
+                    </select>
+                    {errors.gender && <p className="text-red-400 text-xs">{errors.gender.message}</p>}
+                  </div>
+                  <div className="space-y-1 col-span-2">
+                    <label className="text-[10px] uppercase tracking-wider text-zinc-500">Primary Interest *</label>
+                    <input {...register("interest")} className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none focus:ring-1 focus:ring-cyan-500" placeholder="e.g. Web Development, Gaming" />
+                    {errors.interest && <p className="text-red-400 text-xs">{errors.interest.message}</p>}
+                  </div>
               </div>
             </div>
+          )}
 
-            <div className="space-y-1 col-span-1 md:col-span-2">
-              <label className="text-[10px] uppercase tracking-wider text-zinc-500">Password *</label>
-              <input type="password" {...register("password")} className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none focus:ring-1 focus:ring-cyan-500" placeholder="••••••••" />
-              {errors.password && <p className="text-red-400 text-xs">{errors.password.message}</p>}
-            </div>
+          <div className="pt-4 border-t border-zinc-800 flex justify-between items-center mt-6">
+             {step > 1 ? (
+               <button type="button" onClick={prevStep} className="flex items-center gap-2 text-zinc-400 hover:text-white px-4 py-2 rounded text-sm transition-colors bg-zinc-800 hover:bg-zinc-700">
+                 <ChevronLeft className="w-4 h-4" /> Back
+               </button>
+             ) : <div />}
+
+             {step < 3 ? (
+               <button type="button" onClick={nextStep} className="flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white px-6 py-2 rounded text-sm font-bold transition-colors">
+                 Next <ChevronRight className="w-4 h-4" />
+               </button>
+             ) : (
+                <button
+                  type="submit"
+                  disabled={isSubmitting || uploading}
+                  className="bg-cyan-600 hover:bg-cyan-500 text-white px-6 py-2 rounded text-sm font-bold uppercase transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {(isSubmitting || uploading) ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                      Wait
+                    </>
+                  ) : "Submit"}
+                </button>
+             )}
           </div>
-
-          <div className="pt-4 border-t border-zinc-800 flex flex-col items-start gap-4">
-            <button
-              type="submit"
-              disabled={isSubmitting || uploading}
-              className="w-full md:max-w-xs py-3 bg-cyan-600 text-white rounded text-xs font-bold uppercase tracking-widest hover:bg-cyan-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {(isSubmitting || uploading) ? (
-                <>
-                  <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                "Request Approval"
-              )}
-            </button>
-            <div className="flex items-center gap-2 text-xs text-zinc-500">
-              <CheckCircle2 className="w-4 h-4 text-cyan-600" />
+          
+          {step === 3 && (
+            <div className="flex justify-center items-center gap-2 text-[10px] text-zinc-500 mt-4">
+              <CheckCircle2 className="w-3 h-3 text-cyan-600" />
               You agree to the Community Guidelines
             </div>
-          </div>
+          )}
         </form>
         
         <div className="mt-8 text-xs text-zinc-500 uppercase tracking-widest text-center border-t border-zinc-800/50 pt-6">

@@ -16,6 +16,9 @@ import Contact from './pages/Contact';
 import Inbox from './pages/Inbox';
 import Notifications from './pages/Notifications';
 import Features from './pages/Features';
+import Premium from './pages/Premium';
+import PremiumContent from './pages/PremiumContent';
+import Search from './pages/Search';
 
 // Admin Pages
 import AdminLayout from './pages/admin/AdminLayout';
@@ -37,6 +40,8 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/features" element={<Features />} />
+          <Route path="/premium" element={<Premium />} />
+          <Route path="/premium-content" element={<PremiumContent />} />
           <Route path="/community" element={<Community />} />
           <Route path="/thread/:id" element={<Thread />} />
           <Route path="/user/:id" element={<UserProfile />} />
@@ -44,6 +49,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/contact" element={<Contact />} />
           <Route path="/inbox" element={<Inbox />} />
           <Route path="/notifications" element={<Notifications />} />
+          <Route path="/search" element={<Search />} />
         </Route>
 
         <Route path="/admin" element={<AdminLayout />}>

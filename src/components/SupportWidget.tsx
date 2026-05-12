@@ -20,11 +20,19 @@ export default function SupportWidget() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (hasSupabaseConfig) {
-      supabase!.auth.getUser().then(({ data }) => setUser(data.user));
+      supabase!.auth.getUser().then(({ data }) => {
+        setUser(data.user);
+        if (data.user) {
+          supabase!.from('profiles').select('*').eq('id', data.user.id).single().then(res => {
+            if (res.data) setUserProfile(res.data);
+          });
+        }
+      });
     }
   }, []);
 
@@ -155,14 +163,14 @@ export default function SupportWidget() {
                 </a>
                 <button 
                   onClick={() => user ? setMode('chat') : alert('Please log in for live support.')}
-                  className="flex items-center gap-3 p-4 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-cyan-500 transition-colors group"
+                  className={`flex items-center gap-3 p-4 rounded-lg border transition-colors group ${userProfile?.is_premium ? 'bg-amber-500/10 border-amber-500/30 hover:border-amber-500' : 'bg-zinc-900 border-zinc-800 hover:border-cyan-500'}`}
                 >
-                  <div className="w-10 h-10 rounded-full bg-cyan-900/30 text-cyan-500 flex items-center justify-center">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${userProfile?.is_premium ? 'bg-amber-500/20 text-amber-500' : 'bg-cyan-900/30 text-cyan-500'}`}>
                     <MessageSquare className="w-5 h-5" />
                   </div>
                   <div className="flex-1 text-left">
-                    <div className="text-white text-sm font-medium">Live Chat</div>
-                    <div className="text-zinc-500 text-xs">Chat with admin here</div>
+                    <div className="text-white text-sm font-medium flex items-center gap-2">Live Chat {userProfile?.is_premium && <span className="text-[9px] bg-amber-500 text-black px-1.5 py-0.5 rounded uppercase font-bold tracking-widest">Priority</span>}</div>
+                    <div className="text-zinc-500 text-xs">{userProfile?.is_premium ? 'Priority queue for premium members' : 'Chat with admin here'}</div>
                   </div>
                 </button>
               </div>
