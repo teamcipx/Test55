@@ -104,11 +104,11 @@ export default function Dashboard() {
                       </div>
                       <p className="text-zinc-300 mt-1 line-clamp-1" dangerouslySetInnerHTML={{ __html: activity.content || activity.title || 'No content' }}></p>
                     </div>
-                    {activity.type === 'thread' && (
-                       <Link to={`/thread/${activity.id}`} className="shrink-0 p-2 text-zinc-500 hover:text-white transition-colors">
+                    {activity.type === 'thread' || activity.type === 'normal' || activity.type === 'reply' ? (
+                       <Link to={`/thread/${activity.type === 'reply' ? activity.thread_id : activity.id}`} className="shrink-0 p-2 text-zinc-500 hover:text-white transition-colors">
                           <ChevronRight className="w-5 h-5" />
                        </Link>
-                    )}
+                    ) : null}
                   </div>
                 ))
               )}

@@ -283,6 +283,26 @@ export default function Layout() {
               Gallery
             </Link>
             
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                const q = new FormData(e.currentTarget).get('q');
+                if (q) {
+                  setMobileMenuOpen(false);
+                  navigate(`/search?q=${encodeURIComponent(q as string)}`);
+                }
+              }}
+              className="relative mt-2"
+            >
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+              <input 
+                type="text" 
+                name="q"
+                placeholder="Search..." 
+                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-cyan-500 transition-all"
+              />
+            </form>
+
             <div className="pt-4 border-t border-zinc-800 flex flex-col gap-3">
               {userSession ? (
                 <>

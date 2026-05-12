@@ -52,20 +52,20 @@ export default function Gallery() {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
           {images.map(post => (
-            <div key={post.id} className="relative group rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800 aspect-square">
+            <Link to={`/thread/${post.type === 'reply' ? post.thread_id : post.id}`} key={post.id} className="relative group rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800 aspect-square block">
               <img src={post.image_url} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="Gallery item" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
-                <Link to={`/user/${post.author_id}`} className="flex items-center gap-2 hover:text-cyan-400 transition-colors">
+                <div className="flex items-center gap-2">
                    {post.author?.avatar_url ? (
                      <img src={post.author.avatar_url} className="w-5 h-5 rounded-full object-cover" />
                    ) : (
                      <User className="w-5 h-5 p-1 rounded-full bg-zinc-800 text-zinc-500" />
                    )}
                    <span className="text-xs text-white font-medium truncate">{post.author?.display_name || post.author?.username}</span>
-                </Link>
+                </div>
                 <span className="text-[10px] text-zinc-400 mt-1">{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</span>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}

@@ -77,12 +77,16 @@ export default function Thread() {
   const fetchThread = async () => {
     setLoading(true);
     
-    // Fetch thread
-    const { data: threadData } = await supabase
+    const { data: threadData, error } = await supabase
       .from('posts')
       .select('*, author:author_id(*)')
       .eq('id', id)
-      .single();
+      .maybeSingle();
+
+    if (error) {
+      console.error(error);
+      alert('Error fetching thread: ' + error.message);
+    }
       
     if (threadData) {
       // Fetch replies
@@ -193,6 +197,7 @@ export default function Thread() {
       }
     } catch (err: any) {
       console.error(err);
+      alert("Error liking: " + err.message);
     }
   };
 

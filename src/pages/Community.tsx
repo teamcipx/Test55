@@ -437,7 +437,7 @@ export default function Community() {
                 </div>
                 <div className="flex items-center gap-2">
                   {(post.type === 'thread' || post.type === 'reply') && (
-                    <Link to={`/thread/${post.type === 'thread' ? post.id : post.thread_id}`} className="text-xs text-cyan-500 hover:text-cyan-400 p-2 rounded bg-cyan-500/10 uppercase tracking-widest font-bold">
+                    <Link to={`/thread/${post.type === 'reply' ? post.thread_id : post.id}`} className="text-xs text-cyan-500 hover:text-cyan-400 p-2 rounded bg-cyan-500/10 uppercase tracking-widest font-bold">
                       View in Thread
                     </Link>
                   )}
@@ -465,7 +465,7 @@ export default function Community() {
                 <button onClick={() => toggleLike(post.id)} className={`flex items-center gap-2 transition-colors text-sm font-medium group ${post.has_liked ? 'text-red-500' : 'text-zinc-400 hover:text-red-400'}`}>
                   <div className="p-1.5 rounded-full group-hover:bg-red-500/10"><Heart className={`w-4 h-4 ${post.has_liked ? 'fill-current' : ''}`} /></div> {post.likes_count}
                 </button>
-                <Link to={`/thread/${post.type === 'thread' ? post.id : post.thread_id}`} className="flex items-center gap-2 text-zinc-400 hover:text-cyan-400 transition-colors text-sm font-medium group">
+                <Link to={`/thread/${post.type === 'reply' ? post.thread_id : post.id}`} className="flex items-center gap-2 text-zinc-400 hover:text-cyan-400 transition-colors text-sm font-medium group">
                   <div className="p-1.5 rounded-full group-hover:bg-cyan-500/10"><MessageSquare className="w-4 h-4" /></div> {post.replies_count}
                 </Link>
                 <button onClick={() => handleShare(post.id)} className="flex items-center gap-2 text-zinc-400 hover:text-emerald-400 transition-colors text-sm font-medium group">
