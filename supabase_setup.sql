@@ -174,6 +174,15 @@ create table if not exists public.profile_likes (
 alter table public.profile_comments enable row level security;
 alter table public.profile_likes enable row level security;
 
+DO $$ 
+BEGIN
+  DROP POLICY IF EXISTS "Anyone can read profile comments" ON public.profile_comments;
+  DROP POLICY IF EXISTS "Authenticated users can insert profile comments" ON public.profile_comments;
+  DROP POLICY IF EXISTS "Users can delete their own profile comments" ON public.profile_comments;
+  DROP POLICY IF EXISTS "Anyone can read profile likes" ON public.profile_likes;
+  DROP POLICY IF EXISTS "Authenticated users can manage profile likes" ON public.profile_likes;
+END $$;
+
 create policy "Anyone can read profile comments" on public.profile_comments for select using ( true );
 create policy "Authenticated users can insert profile comments" on public.profile_comments for insert with check ( auth.role() = 'authenticated' );
 create policy "Users can delete their own profile comments" on public.profile_comments for delete using ( auth.uid() = author_id );
