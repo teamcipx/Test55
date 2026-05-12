@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { supabase, hasSupabaseConfig } from "../lib/supabase";
 import { uploadToImgBB } from "../lib/imgbb";
 import { CheckCircle2, AlertCircle, Upload, Save, Lock, User } from "lucide-react";
+import UserBadges from "../components/UserBadges";
 
 export default function Profile() {
   const [user, setUser] = useState<any>(null);
@@ -167,9 +168,11 @@ export default function Profile() {
       <div className="grid md:grid-cols-3 gap-8">
         {/* Left Column: Avatar & Basic Info */}
         <div className="md:col-span-1 space-y-6">
-          <div className="bg-zinc-900/30 border border-zinc-800 rounded-xl p-6 backdrop-blur-sm text-center flex flex-col items-center">
+          <div className={`bg-zinc-900/30 border rounded-xl p-6 backdrop-blur-sm text-center flex flex-col items-center relative overflow-hidden ${profile?.is_premium ? 'border-amber-500 shadow-xl shadow-amber-500/10' : 'border-zinc-800'}`}>
+            <div className={`absolute top-0 right-0 w-48 h-48 blur-[80px] rounded-full pointer-events-none opacity-20 ${profile?.is_admin ? 'bg-red-500' : profile?.is_premium ? 'bg-amber-500 opacity-40' : 'bg-cyan-500'}`} />
+            
             <div 
-              className="relative w-32 h-32 rounded-full border border-dashed border-zinc-700 hover:border-cyan-500 flex flex-col items-center justify-center overflow-hidden cursor-pointer transition-colors group bg-zinc-950 mb-4"
+              className={`relative z-10 w-32 h-32 rounded-full border-2 flex flex-col items-center justify-center overflow-hidden cursor-pointer transition-colors group bg-zinc-950 mb-4 shadow-xl ${profile?.is_premium ? 'border-amber-500 shadow-amber-500/30 border-solid' : 'border-dashed border-zinc-700 hover:border-cyan-500'}`}
               onClick={() => fileInputRef.current?.click()}
             >
               {avatarPreview ? (
@@ -190,11 +193,9 @@ export default function Profile() {
               ref={fileInputRef} 
               onChange={handleFileChange}
             />
-            <h3 className="text-lg font-medium text-white">@{profile?.username || "user"}</h3>
-            <span className="inline-block px-2 py-0.5 bg-zinc-800 text-zinc-400 rounded text-[10px] uppercase tracking-widest mt-2 border border-zinc-700">
-              {profile?.is_admin ? "Administrator" : (profile?.is_approved ? "Approved Member" : "Pending Approval")}
-            </span>
-            <p className="text-xs text-zinc-500 mt-4 break-all">{user.email}</p>
+             <h3 className="text-lg font-medium text-white">@{profile?.username || "user"}</h3>
+             <UserBadges user={profile} />
+             <p className="text-xs text-zinc-500 mt-4 break-all">{user.email}</p>
           </div>
 
           <div className="bg-zinc-900/30 border border-zinc-800 rounded-xl p-6 backdrop-blur-sm">
