@@ -23,6 +23,7 @@ create table if not exists public.profiles (
 
 -- Ensure admin and approved columns exist (just in case the table already existed)
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_admin boolean DEFAULT false;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_moderator boolean DEFAULT false;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_approved boolean DEFAULT false;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS relationship_status text;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_premium boolean DEFAULT false;

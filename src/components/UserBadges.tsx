@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, Crown, CheckCircle2, Star, Clock } from 'lucide-react';
+import { ShieldCheck, Crown, CheckCircle2, Star, Clock, ShieldAlert } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 export default function UserBadges({ user }: { user: any }) {
@@ -13,6 +13,12 @@ export default function UserBadges({ user }: { user: any }) {
       {user.is_admin && (
         <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-500/20 text-red-500 text-[10px] font-bold uppercase tracking-wider title='Admin'">
           <ShieldCheck className="w-3 h-3" /> Admin
+        </div>
+      )}
+
+      {user.is_moderator && !user.is_admin && (
+        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-fuchsia-500/20 text-fuchsia-400 text-[10px] font-bold uppercase tracking-wider title='Moderator'">
+          <ShieldAlert className="w-3 h-3" /> Mod
         </div>
       )}
       

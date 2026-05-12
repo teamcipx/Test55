@@ -32,6 +32,14 @@ export default function AdminUsers() {
     }
   };
 
+  const updateModerator = async (id: string, isModerator: boolean) => {
+    if (!hasSupabaseConfig) return;
+    const { error } = await supabase!.from('profiles').update({ is_moderator: isModerator }).eq('id', id);
+    if (!error) {
+      setUsers(users.map(u => u.id === id ? { ...u, is_moderator: isModerator } : u));
+    }
+  };
+
   const updatePremiumRequest = async (requestId: string, userId: string, action: 'approved' | 'rejected') => {
     if (!hasSupabaseConfig) return;
 
@@ -241,6 +249,14 @@ export default function AdminUsers() {
                               className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-black rounded text-[10px] font-bold uppercase tracking-wider transition-colors"
                             >
                               Make VIP
+                            </button>
+                          )}
+                          {!user.is_admin && (
+                            <button 
+                              onClick={() => updateModerator(user.id, !user.is_moderator)}
+                              className={`px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-colors ${user.is_moderator ? 'bg-fuchsia-500/20 text-fuchsia-400 hover:bg-fuchsia-500/30' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'}`}
+                            >
+                              {user.is_moderator ? 'Revoke Mod' : 'Make Mod'}
                             </button>
                           )}
                           {!user.is_approved ? (

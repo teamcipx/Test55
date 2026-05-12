@@ -267,10 +267,11 @@ export default function Profile() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] uppercase tracking-wider text-zinc-500">Bio</label>
+                <label className="text-[10px] uppercase tracking-wider text-zinc-500">Bio <span className="text-zinc-600">({bio.length}/500)</span></label>
                 <textarea 
                   value={bio}
                   onChange={e => setBio(e.target.value)}
+                  maxLength={500}
                   className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none min-h-[80px] resize-none" 
                   placeholder="Tell us a little bit about yourself..."
                 />

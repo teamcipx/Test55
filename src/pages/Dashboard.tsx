@@ -49,11 +49,18 @@ export default function Dashboard() {
         <div className="w-12 h-12 rounded-xl bg-cyan-950/30 flex items-center justify-center border border-cyan-900/50">
           <LayoutDashboard className="w-6 h-6 text-cyan-500" />
         </div>
-        <div>
+        <div className="flex-1">
           <h1 className="text-3xl font-serif">Dashboard</h1>
           <p className="text-zinc-400">Overview of your activity</p>
         </div>
+        <Link to="/community" className="hidden md:flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 px-4 py-2 rounded-lg text-sm transition-colors">
+          <Activity className="w-4 h-4" /> Go to Feed
+        </Link>
       </div>
+
+      <Link to="/community" className="md:hidden flex items-center justify-center w-full gap-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 px-4 py-3 rounded-lg text-sm transition-colors mb-6">
+        <Activity className="w-4 h-4" /> Go to Feed
+      </Link>
 
       {loading ? (
         <div className="flex justify-center py-20">
