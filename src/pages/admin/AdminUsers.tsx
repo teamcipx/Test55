@@ -36,24 +36,42 @@ export default function AdminUsers() {
     if (!hasSupabaseConfig) return;
 
     // Update request
-    await supabase.from('premium_requests').update({ status: action }).eq('id', requestId);
+    if (requestId !== 'manual') {
+      await supabase.from('premium_requests').update({ status: action }).eq('id', requestId);
+    }
 
     if (action === 'approved') {
        // update user profile, set expiry to 30 days from now
        const expiryDate = new Date();
        expiryDate.setDate(expiryDate.getDate() + 30);
        
-       await supabase.from('profiles').update({ 
+       const { error } = await supabase.from('profiles').update({ 
          is_premium: true,
          premium_expires_at: expiryDate.toISOString() 
        }).eq('id', userId);
+
+       if (error) {
+         if (error.code === '42703') {
+           // Fallback if premium_expires_at column doesn't exist yet
+           await supabase.from('profiles').update({ 
+             is_premium: true
+           }).eq('id', userId);
+           alert("Notice: 'premium_expires_at' column is missing in your Supabase database. User was upgraded, but expiry date won't be saved. Please run the updated SQL setup.");
+         } else {
+           alert("Error updating user profile: " + error.message);
+         }
+       }
        
        setUsers(users.map(u => u.id === userId ? { ...u, is_premium: true, premium_expires_at: expiryDate.toISOString() } : u));
     } else {
-       await supabase.from('profiles').update({ 
+       const { error } = await supabase.from('profiles').update({ 
          is_premium: false,
          premium_expires_at: null
        }).eq('id', userId);
+
+       if (error && error.code === '42703') {
+         await supabase.from('profiles').update({ is_premium: false }).eq('id', userId);
+       }
        
        setUsers(users.map(u => u.id === userId ? { ...u, is_premium: false, premium_expires_at: null } : u));
     }
@@ -209,23 +227,38 @@ export default function AdminUsers() {
                         )}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        {!user.is_approved ? (
-                          <div className="flex justify-end gap-2">
+                        <div className="flex justify-end items-center gap-2">
+                          {user.is_premium ? (
+                            <button 
+                              onClick={() => updatePremiumRequest('manual', user.id, 'rejected')}
+                              className="px-3 py-1.5 bg-amber-500/20 text-amber-500 hover:bg-amber-500/30 rounded text-[10px] font-bold uppercase tracking-wider transition-colors"
+                            >
+                              Revoke VIP
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={() => updatePremiumRequest('manual', user.id, 'approved')}
+                              className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-black rounded text-[10px] font-bold uppercase tracking-wider transition-colors"
+                            >
+                              Make VIP
+                            </button>
+                          )}
+                          {!user.is_approved ? (
                             <button 
                               onClick={() => updateApproval(user.id, true)}
                               className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs font-bold uppercase tracking-wider transition-colors"
                             >
                               Approve
                             </button>
-                          </div>
-                        ) : (
-                          <button 
-                            onClick={() => updateApproval(user.id, false)}
-                            className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-xs font-bold uppercase tracking-wider transition-colors"
-                          >
-                            Revoke
-                          </button>
-                        )}
+                          ) : (
+                            <button 
+                              onClick={() => updateApproval(user.id, false)}
+                              className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-xs font-bold uppercase tracking-wider transition-colors"
+                            >
+                              Revoke
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}

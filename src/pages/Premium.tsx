@@ -42,14 +42,14 @@ export default function Premium() {
       .limit(1);
 
     if (requests && requests.length > 0) {
-          if (requests[0].status === 'pending') {
-            setRequestStatus('pending');
-          } else if (profileData?.is_premium) {
-             setRequestStatus('active');
-          }
-        } else if (profileData?.is_premium) {
-          setRequestStatus('active');
-        }
+      if (requests[0].status === 'pending') {
+        setRequestStatus('pending');
+      } else if (requests[0].status === 'approved' || profileData?.is_premium) {
+        setRequestStatus('active');
+      }
+    } else if (profileData?.is_premium) {
+      setRequestStatus('active');
+    }
 
     setLoading(false);
   };
