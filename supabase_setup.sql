@@ -25,6 +25,7 @@ create table if not exists public.profiles (
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_admin boolean DEFAULT false;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_approved boolean DEFAULT false;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS relationship_status text;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS premium_expires_at timestamp with time zone;
 
 -- 2. Messages Table for Support 
 create table if not exists public.messages (

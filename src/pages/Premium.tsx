@@ -42,14 +42,14 @@ export default function Premium() {
       .limit(1);
 
     if (requests && requests.length > 0) {
-      if (requests[0].status === 'pending') {
-        setRequestStatus('pending');
-      } else if (profileData?.is_premium) {
-         setRequestStatus('active');
-      }
-    } else if (profileData?.is_premium) {
-      setRequestStatus('active');
-    }
+          if (requests[0].status === 'pending') {
+            setRequestStatus('pending');
+          } else if (profileData?.is_premium) {
+             setRequestStatus('active');
+          }
+        } else if (profileData?.is_premium) {
+          setRequestStatus('active');
+        }
 
     setLoading(false);
   };
@@ -115,8 +115,19 @@ export default function Premium() {
       {requestStatus === 'active' ? (
         <div className="bg-gradient-to-r from-amber-500/10 to-yellow-500/5 border border-amber-500/20 rounded-2xl p-8 text-center max-w-2xl mx-auto mb-12">
            <BadgeCheck className="w-16 h-16 text-amber-500 mx-auto mb-4" />
-           <h2 className="text-2xl font-serif text-white mb-2">You are Premium!</h2>
-           <p className="text-zinc-400">Enjoy all your exclusive benefits.</p>
+           <h2 className="text-3xl font-serif text-white mb-2 flex flex-col items-center gap-2">
+             <span>You are VIP</span>
+             <div className="flex items-center gap-1.5 px-3 py-1 rounded bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/30 text-amber-500 text-sm font-bold uppercase tracking-widest">
+                <Star className="w-4 h-4 fill-amber-500" /> VIP
+             </div>
+           </h2>
+           <p className="text-zinc-400 mt-4 text-lg">Enjoy all your exclusive benefits.</p>
+           {profile?.premium_expires_at && (
+             <div className="inline-flex items-center gap-2 mt-6 bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 text-sm text-zinc-300">
+               <Clock className="w-4 h-4 text-amber-500" />
+               Expires: <span className="text-white font-medium">{new Date(profile.premium_expires_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+             </div>
+           )}
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start max-w-4xl mx-auto">

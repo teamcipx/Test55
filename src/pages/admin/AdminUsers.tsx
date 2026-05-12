@@ -39,12 +39,23 @@ export default function AdminUsers() {
     await supabase.from('premium_requests').update({ status: action }).eq('id', requestId);
 
     if (action === 'approved') {
-       // update user profile
-       await supabase.from('profiles').update({ is_premium: true }).eq('id', userId);
-       setUsers(users.map(u => u.id === userId ? { ...u, is_premium: true } : u));
+       // update user profile, set expiry to 30 days from now
+       const expiryDate = new Date();
+       expiryDate.setDate(expiryDate.getDate() + 30);
+       
+       await supabase.from('profiles').update({ 
+         is_premium: true,
+         premium_expires_at: expiryDate.toISOString() 
+       }).eq('id', userId);
+       
+       setUsers(users.map(u => u.id === userId ? { ...u, is_premium: true, premium_expires_at: expiryDate.toISOString() } : u));
     } else {
-       await supabase.from('profiles').update({ is_premium: false }).eq('id', userId);
-       setUsers(users.map(u => u.id === userId ? { ...u, is_premium: false } : u));
+       await supabase.from('profiles').update({ 
+         is_premium: false,
+         premium_expires_at: null
+       }).eq('id', userId);
+       
+       setUsers(users.map(u => u.id === userId ? { ...u, is_premium: false, premium_expires_at: null } : u));
     }
 
     setPremiumRequests(premiumRequests.map(r => r.id === requestId ? { ...r, status: action } : r));
