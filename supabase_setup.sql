@@ -174,21 +174,39 @@ create table if not exists public.profile_likes (
 alter table public.profile_comments enable row level security;
 alter table public.profile_likes enable row level security;
 
-DO $$ 
+DO $$
 BEGIN
-  DROP POLICY IF EXISTS "Anyone can read profile comments" ON public.profile_comments;
-  DROP POLICY IF EXISTS "Authenticated users can insert profile comments" ON public.profile_comments;
-  DROP POLICY IF EXISTS "Users can delete their own profile comments" ON public.profile_comments;
-  DROP POLICY IF EXISTS "Anyone can read profile likes" ON public.profile_likes;
-  DROP POLICY IF EXISTS "Authenticated users can manage profile likes" ON public.profile_likes;
-END $$;
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'profile_comments' AND policyname = 'Anyone can read profile comments'
+    ) THEN
+        EXECUTE 'CREATE POLICY "Anyone can read profile comments" ON public.profile_comments FOR SELECT USING (true)';
+    END IF;
 
-create policy "Anyone can read profile comments" on public.profile_comments for select using ( true );
-create policy "Authenticated users can insert profile comments" on public.profile_comments for insert with check ( auth.role() = 'authenticated' );
-create policy "Users can delete their own profile comments" on public.profile_comments for delete using ( auth.uid() = author_id );
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'profile_comments' AND policyname = 'Authenticated users can insert profile comments'
+    ) THEN
+        EXECUTE 'CREATE POLICY "Authenticated users can insert profile comments" ON public.profile_comments FOR INSERT WITH CHECK (auth.role() = ''authenticated'')';
+    END IF;
 
-create policy "Anyone can read profile likes" on public.profile_likes for select using ( true );
-create policy "Authenticated users can manage profile likes" on public.profile_likes for all using ( auth.uid() = user_id );
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'profile_comments' AND policyname = 'Users can delete their own profile comments'
+    ) THEN
+        EXECUTE 'CREATE POLICY "Users can delete their own profile comments" ON public.profile_comments FOR DELETE USING (auth.uid() = author_id)';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'profile_likes' AND policyname = 'Anyone can read profile likes'
+    ) THEN
+        EXECUTE 'CREATE POLICY "Anyone can read profile likes" ON public.profile_likes FOR SELECT USING (true)';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'profile_likes' AND policyname = 'Authenticated users can manage profile likes'
+    ) THEN
+        EXECUTE 'CREATE POLICY "Authenticated users can manage profile likes" ON public.profile_likes FOR ALL USING (auth.uid() = user_id)';
+    END IF;
+END
+$$;
 
 -- ============================================================================
 -- How to set an Admin user manually (run this in Supabase SQL Editor):
