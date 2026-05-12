@@ -143,12 +143,16 @@ export default function Layout() {
               <Link to="/premium-content" className="text-sm font-medium text-amber-500 hover:text-amber-400 transition-colors flex items-center gap-1">
                 <Crown className="w-3.5 h-3.5" /> Videos
               </Link>
-              <Link to="/galleries" className="text-sm font-medium text-zinc-400 hover:text-cyan-400 transition-colors flex items-center gap-1">
-                <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-500 text-[9px] font-bold uppercase tracking-wider">18+</span>
-                Galleries
+              <Link to="/gallery" className="text-sm font-medium text-zinc-400 hover:text-cyan-400 transition-colors flex items-center gap-1">
+                <span className="px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-500 text-[9px] font-bold uppercase tracking-wider">NEW</span>
+                Gallery
               </Link>
               
               <div className="w-px h-4 bg-zinc-800 mx-2" />
+
+              <Link to="/search" className="lg:hidden text-sm font-medium text-zinc-400 hover:text-cyan-400 transition-colors flex items-center p-2 rounded hover:bg-zinc-800">
+                <Search className="w-4 h-4" />
+              </Link>
 
               <form 
                 onSubmit={(e) => {

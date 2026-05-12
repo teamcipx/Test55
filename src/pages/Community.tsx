@@ -7,6 +7,7 @@ import { uploadToImgBB } from "../lib/imgbb";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import AdBanner from "../components/ads/AdBanner";
+import AdPopup from "../components/ads/AdPopup";
 
 // Remove invalid links from text
 function formatPostContent(html: string) {
@@ -283,6 +284,7 @@ export default function Community() {
 
   return (
     <div className="max-w-4xl mx-auto w-full py-6 md:py-10 px-4 min-h-screen">
+      <AdPopup />
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-serif text-white mb-2">Community Discussions</h1>

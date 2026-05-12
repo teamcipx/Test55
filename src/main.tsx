@@ -19,6 +19,7 @@ import Features from './pages/Features';
 import Premium from './pages/Premium';
 import PremiumContent from './pages/PremiumContent';
 import Search from './pages/Search';
+import Gallery from './pages/Gallery';
 
 // Admin Pages
 import AdminLayout from './pages/admin/AdminLayout';
@@ -50,6 +51,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/inbox" element={<Inbox />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/search" element={<Search />} />
+          <Route path="/gallery" element={<Gallery />} />
         </Route>
 
         <Route path="/admin" element={<AdminLayout />}>

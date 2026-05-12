@@ -57,11 +57,17 @@ export default function UserProfile() {
     if (hasLiked) {
       setProfileLikes(prev => prev - 1);
       setHasLiked(false);
-      await supabase.from('profile_likes').delete().eq('profile_id', id).eq('user_id', currentUser.id);
+      const { error } = await supabase.from('profile_likes').delete().eq('profile_id', id).eq('user_id', currentUser.id);
+      if (error) alert("Could not remove like. " + error.message);
     } else {
       setProfileLikes(prev => prev + 1);
       setHasLiked(true);
-      await supabase.from('profile_likes').insert({ profile_id: id, user_id: currentUser.id });
+      const { error } = await supabase.from('profile_likes').insert({ profile_id: id, user_id: currentUser.id });
+      if (error) {
+         setProfileLikes(prev => prev - 1);
+         setHasLiked(false);
+         alert("Unable to like: Database may need update. " + error.message);
+      }
     }
   };
 
@@ -120,6 +126,8 @@ export default function UserProfile() {
     if (!error && data) {
       setComments([data, ...comments]);
       setNewComment('');
+    } else if (error) {
+      alert("Unable to post comment: " + error.message + " (Have you run the latest supabase_setup.sql?)");
     }
     setSubmitting(false);
   };

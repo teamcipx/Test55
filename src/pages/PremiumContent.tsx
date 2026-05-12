@@ -9,12 +9,12 @@ export default function PremiumContent() {
   const [loading, setLoading] = useState(true);
 
   const fakeVideos = [
-    { id: 1, title: "Exclusive Interview: The Founders", duration: "45:12", img: "https://images.unsplash.com/photo-1516280440502-c6722d56abf0?auto=format&fit=crop&w=500" },
-    { id: 2, title: "Behind the Scenes 2026", duration: "12:05", img: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=500" },
-    { id: 3, title: "Next-Gen UI Masterclass", duration: "1:20:00", img: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=500" },
-    { id: 4, title: "Community Meetup Highlights", duration: "08:45", img: "https://images.unsplash.com/photo-1475721025585-249cb5ce8ce8?auto=format&fit=crop&w=500" },
-    { id: 5, title: "Advanced Security & Z++", duration: "32:10", img: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=500" },
-    { id: 6, title: "Future of The Platform", duration: "55:30", img: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=500" },
+    { id: 1, title: "Exclusive Mazhabi 18+ Hot Content - Part 1", duration: "45:12", img: "https://images.unsplash.com/photo-1516280440502-c6722d56abf0?auto=format&fit=crop&w=500" },
+    { id: 2, title: "Mazhabi Night Raw - 18+ Special", duration: "12:05", img: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=500" },
+    { id: 3, title: "Hot Mazhabi Secrets Uncensored 18+", duration: "1:20:00", img: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=500" },
+    { id: 4, title: "Private Mazhabi Collection - Hot 18+", duration: "08:45", img: "https://images.unsplash.com/photo-1475721025585-249cb5ce8ce8?auto=format&fit=crop&w=500" },
+    { id: 5, title: "Adult 18+ Mazhabi Encounters", duration: "32:10", img: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=500" },
+    { id: 6, title: "Mazhabi Super Hot 18+ Leaks", duration: "55:30", img: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=500" },
   ];
 
   useEffect(() => {
@@ -41,9 +41,9 @@ export default function PremiumContent() {
       <div className="mb-10 flex items-center justify-between">
          <div>
             <h1 className="text-3xl md:text-4xl font-serif text-white mb-2 flex items-center gap-3">
-               Premium Content <Crown className="w-8 h-8 text-amber-500" />
+               Mazhabi 18+ Videos <Crown className="w-8 h-8 text-amber-500" />
             </h1>
-            <p className="text-zinc-400">Exclusive videos and masterclasses for premium members.</p>
+            <p className="text-zinc-400">Exclusive 18+ hot mazhabi content for premium members.</p>
          </div>
          {!isPremium && (
             <Link to="/premium" className="bg-gradient-to-r from-amber-500 to-yellow-500 text-black px-6 py-2.5 rounded-full font-bold text-sm tracking-wide shadow-lg shadow-amber-500/20 hover:scale-105 transition-transform">
