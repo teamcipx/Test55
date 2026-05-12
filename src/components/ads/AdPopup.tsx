@@ -1,21 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { X, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router';
+import { supabase } from '../../lib/supabase';
 
 export default function AdPopup() {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // Show after 5 seconds of being on the feed
-    const timer = setTimeout(() => {
-      // Only show if haven't shown recently (in session)
-      if (!sessionStorage.getItem('feed_ad_shown')) {
-        setIsOpen(true);
-        sessionStorage.setItem('feed_ad_shown', 'true');
+    const checkUserAndShowAd = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase.from('profiles').select('is_premium').eq('id', user.id).single();
+        if (profile?.is_premium) {
+          return; // Don't show ad for premium users
+        }
       }
-    }, 5000);
 
-    return () => clearTimeout(timer);
+      // Show after 5 seconds of being on the feed
+      const timer = setTimeout(() => {
+        // Only show if haven't shown recently (in session)
+        if (!sessionStorage.getItem('feed_ad_shown')) {
+          setIsOpen(true);
+          sessionStorage.setItem('feed_ad_shown', 'true');
+        }
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    };
+
+    checkUserAndShowAd();
   }, []);
 
   if (!isOpen) return null;

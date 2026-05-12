@@ -27,6 +27,26 @@ ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_approved boolean DEFAULT
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS relationship_status text;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_premium boolean DEFAULT false;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS premium_expires_at timestamp with time zone;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS bio text;
+
+-- 1A. Blocks Table
+create table if not exists public.blocks (
+  id uuid default gen_random_uuid() primary key,
+  blocker_id uuid references public.profiles(id) not null,
+  blocked_id uuid references public.profiles(id) not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique(blocker_id, blocked_id)
+);
+
+-- 1B. Reports Table
+create table if not exists public.reports (
+  id uuid default gen_random_uuid() primary key,
+  reporter_id uuid references public.profiles(id) not null,
+  reported_id uuid references public.profiles(id) not null,
+  reason text not null,
+  status text default 'pending', -- pending, reviewed, resolved
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
 
 -- 2. Messages Table for Support 
 create table if not exists public.messages (

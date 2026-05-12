@@ -20,6 +20,7 @@ export default function Profile() {
   const [relationshipStatus, setRelationshipStatus] = useState("");
   const [age, setAge] = useState("");
   const [phone, setPhone] = useState("");
+  const [bio, setBio] = useState("");
   
   // Password Change
   const [newPassword, setNewPassword] = useState("");
@@ -56,6 +57,7 @@ export default function Profile() {
         setRelationshipStatus(data.relationship_status || "");
         setAge(data.age?.toString() || "");
         setPhone(data.phone || "");
+        setBio(data.bio || "");
         setAvatarPreview(data.avatar_url || null);
       } else if (error) {
         console.error("Error fetching profile", error);
@@ -90,6 +92,7 @@ export default function Profile() {
         display_name: displayName,
         real_name: realName,
         interest,
+        bio,
         relationship_status: relationshipStatus,
         age: parseInt(age) || null,
         avatar_url: avatarUrl
@@ -261,6 +264,16 @@ export default function Profile() {
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none" 
                   />
                 </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase tracking-wider text-zinc-500">Bio</label>
+                <textarea 
+                  value={bio}
+                  onChange={e => setBio(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none min-h-[80px] resize-none" 
+                  placeholder="Tell us a little bit about yourself..."
+                />
               </div>
 
               <div className="grid sm:grid-cols-2 gap-5">

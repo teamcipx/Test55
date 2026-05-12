@@ -34,11 +34,12 @@ export default function UserProfile() {
   }, [id, currentUser]);
 
   const fetchProfileLikes = async () => {
-    if (!id) return;
+    if (!profile?.id && !id) return;
+    const targetId = profile?.id || id;
     const { count } = await supabase
       .from('profile_likes')
       .select('*', { count: 'exact', head: true })
-      .eq('profile_id', id);
+      .eq('profile_id', targetId);
     
     setProfileLikes(count || 0);
 
@@ -46,7 +47,7 @@ export default function UserProfile() {
       const { data } = await supabase
         .from('profile_likes')
         .select('*')
-        .eq('profile_id', id)
+        .eq('profile_id', targetId)
         .eq('user_id', currentUser.id)
         .single();
       
@@ -55,17 +56,18 @@ export default function UserProfile() {
   };
 
   const handleToggleLike = async () => {
-    if (!currentUser) return;
+    if (!currentUser || (!profile?.id && !id)) return;
+    const targetId = profile?.id || id;
     
     if (hasLiked) {
       setProfileLikes(prev => prev - 1);
       setHasLiked(false);
-      const { error } = await supabase.from('profile_likes').delete().eq('profile_id', id).eq('user_id', currentUser.id);
+      const { error } = await supabase.from('profile_likes').delete().eq('profile_id', targetId).eq('user_id', currentUser.id);
       if (error) alert("Could not remove like. " + error.message);
     } else {
       setProfileLikes(prev => prev + 1);
       setHasLiked(true);
-      const { error } = await supabase.from('profile_likes').insert({ profile_id: id, user_id: currentUser.id });
+      const { error } = await supabase.from('profile_likes').insert({ profile_id: targetId, user_id: currentUser.id });
       if (error) {
          setProfileLikes(prev => prev - 1);
          setHasLiked(false);
@@ -78,11 +80,17 @@ export default function UserProfile() {
     setLoading(true);
     try {
       // Fetch profile
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', id)
-        .single();
+      // Check if id is actually a username (no dashes)
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id || '');
+      
+      let query = supabase.from('profiles').select('*');
+      if (isUuid) {
+        query = query.eq('id', id);
+      } else {
+        query = query.ilike('username', id || '');
+      }
+
+      const { data: profileData, error: profileError } = await query.single();
         
       if (profileError) throw profileError;
       if (profileData) {
@@ -92,7 +100,7 @@ export default function UserProfile() {
         const { data: postsData } = await supabase
           .from('posts')
           .select('*, author:author_id(*)')
-          .eq('author_id', id)
+          .eq('author_id', profileData.id)
           .in('type', ['post', 'thread'])
           .order('created_at', { ascending: false });
           
@@ -100,28 +108,32 @@ export default function UserProfile() {
       }
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'User not found');
+      setError('User not found');
     } finally {
       setLoading(false);
     }
   };
 
   const fetchProfileComments = async () => {
+    if (!profile?.id && !id) return;
+    const targetId = profile?.id || id;
+    
     const { data } = await supabase
       .from('profile_comments')
       .select('*, author:author_id(*)')
-      .eq('profile_id', id)
+      .eq('profile_id', targetId)
       .order('created_at', { ascending: false });
     if (data) setComments(data);
   };
 
   const handlePostComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentUser || !newComment.trim()) return;
+    if (!currentUser || !newComment.trim() || (!profile?.id && !id)) return;
+    const targetId = profile?.id || id;
     
     setSubmitting(true);
     const { data, error } = await supabase.from('profile_comments').insert({
-      profile_id: id,
+      profile_id: targetId,
       author_id: currentUser.id,
       content: newComment.trim()
     }).select('*, author:author_id(*)').single();
@@ -213,6 +225,10 @@ export default function UserProfile() {
             <h1 className={`text-3xl md:text-4xl font-serif mb-2 ${profile.is_premium ? 'text-amber-500 drop-shadow-md' : 'text-white'}`}>{profile.display_name || "User"}</h1>
             <p className="text-zinc-400 font-mono text-sm mb-4">@{profile.username || "unknown"}</p>
             
+            {profile.bio && (
+              <p className="text-zinc-300 text-sm mb-4 max-w-lg mx-auto md:mx-0">{profile.bio}</p>
+            )}
+
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-6">
               <UserBadges user={profile} />
               

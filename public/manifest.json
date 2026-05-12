@@ -1,0 +1,21 @@
+{
+  "name": "Mazhabi HQ",
+  "short_name": "Mazhabi",
+  "description": "Connecting the Mazhabi community worldwide.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#050505",
+  "icons": [
+    {
+      "src": "https://i.ibb.co.com/KPF5LsD/1778564278241.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "https://i.ibb.co.com/KPF5LsD/1778564278241.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

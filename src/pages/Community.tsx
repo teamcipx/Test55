@@ -29,7 +29,12 @@ function formatPostContent(html: string) {
       a.parentNode?.replaceChild(textNode, a);
     }
   });
-  return temp.innerHTML;
+  
+  // Format mentions (@username)
+  let content = temp.innerHTML;
+  content = content.replace(/(^|\s)@([\w\.\-]+)/g, '$1<a href="/user/$2" class="text-amber-400 font-bold hover:underline">@$2</a>');
+  
+  return content;
 }
 
 export default function Community() {
